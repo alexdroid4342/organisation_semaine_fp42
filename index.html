@@ -132,6 +132,18 @@
     50% { background-position: 4px -3px; }
   }
 
+  .bonus-badge {
+    display: none;
+    margin-left: auto;
+    font-size: 12.5px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.28);
+    padding: 4px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .bonus-badge.show { display: inline-block; }
+
   .cantine-row:not(:empty) { margin-bottom: 12px; }
   .cantine-toggle {
     display: block; width: 100%; text-align: left;
@@ -236,6 +248,34 @@
     color: var(--muted);
     margin-top: 4px;
   }
+  /* Bonus chores (lave-vaisselle, aspirateur) — adult-validated, flagged with
+     a gold outline and slight transparency so they stand out. */
+  .task-btn.bonus-task { box-shadow: 0 0 0 3px rgba(250,176,5,0.55); opacity: 0.82; }
+
+  .recap-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .recap-col-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .recap-col-title.faustine { color: var(--faustine); }
+  .recap-col-title.victoria { color: var(--victoria); }
+  .recap-miss-line { font-size: 12.5px; color: var(--muted); margin-bottom: 4px; }
+  .recap-miss-line b { color: var(--ink); }
+  .recap-empty { font-size: 12.5px; color: var(--muted); font-style: italic; }
+  .recap-bonus { margin-top: 10px; }
+  .recap-bonus-line {
+    font-size: 12.5px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .recap-bonus-line.ok { background: rgba(64,192,87,0.14); color: #69db7c; }
+  .recap-bonus-line.warn { background: rgba(255,192,120,0.14); color: #ffc078; }
 
   .rewards-box {
     margin-top: 14px;
@@ -433,14 +473,14 @@
     </div>
 
     <div class="child-section faustine">
-      <div class="child-title faustine">👧 Faustine</div>
+      <div class="child-title faustine">👧 Faustine<span class="bonus-badge" id="bonusBadgeFaustine"></span></div>
       <div class="cantine-row" id="cantineFaustine"></div>
       <div class="tasks" id="tasksFaustine"></div>
       <div class="rewards-box" id="rewards-faustine"></div>
     </div>
 
     <div class="child-section victoria">
-      <div class="child-title victoria">👧 Victoria ✨</div>
+      <div class="child-title victoria">👧 Victoria ✨<span class="bonus-badge" id="bonusBadgeVictoria"></span></div>
       <div class="cantine-row" id="cantineVictoria"></div>
       <div class="tasks" id="tasksVictoria"></div>
       <div class="rewards-box" id="rewards-victoria"></div>
@@ -459,9 +499,22 @@
       </div>
       <div id="recapBody"></div>
     </div>
+
+    <div class="recap-details">
+      <div class="recap-col">
+        <div class="recap-col-title faustine">👧 Faustine</div>
+        <div class="recap-miss-list" id="recapMissesFaustine"></div>
+        <div class="recap-bonus" id="recapBonusFaustine"></div>
+      </div>
+      <div class="recap-col">
+        <div class="recap-col-title victoria">👧 Victoria</div>
+        <div class="recap-miss-list" id="recapMissesVictoria"></div>
+        <div class="recap-bonus" id="recapBonusVictoria"></div>
+      </div>
+    </div>
   </div>
 
-  <div class="note">Les coches sont enregistrées sur cette tablette pour toute la semaine (Lun → Dim). Une nouvelle semaine démarre automatiquement le lundi. Sur les jours d'école, la tâche "Déjeuner" n'apparaît que si la cantine est désactivée pour l'enfant ce jour-là (bouton en haut de sa liste). Toucher une tâche déjà cochée (ou déjà marquée "non applicable") demande le code parent, avec le choix d'annuler ou de la marquer "non à faire ce jour" (ex : absente ce jour-là) — elle est alors retirée du calcul du pourcentage. Le bouton "Sélection multiple" permet de choisir plusieurs tâches déjà cochées (ou non applicables), chez Faustine et/ou Victoria en même temps, pour les annuler ou les désactiver toutes en une seule fois, avec un seul code parent.</div>
+  <div class="note">Les coches sont enregistrées sur cette tablette pour toute la semaine (Lun → Dim). Une nouvelle semaine démarre automatiquement le lundi. Sur les jours d'école, la tâche "Déjeuner" n'apparaît que si la cantine est désactivée pour l'enfant ce jour-là (bouton en haut de sa liste). "Ranger sa chambre" n'apparaît que le mercredi et le dimanche. Toucher une tâche déjà cochée (ou déjà marquée "non applicable") demande le code parent, avec le choix d'annuler ou de la marquer "non à faire ce jour" (ex : absente ce jour-là) — elle est alors retirée du calcul du pourcentage. Le bouton "Sélection multiple" permet de choisir plusieurs tâches déjà cochées (ou non applicables), chez Faustine et/ou Victoria en même temps, pour les annuler ou les désactiver toutes en une seule fois, avec un seul code parent. Les corvées bonus (lave-vaisselle, aspirateur, contour doré) ne peuvent être cochées "faites" que par un adulte (code requis) : chaque jour où l'une des deux est faite, ça génère un bonus qui peut compenser un raté sur l'autre cette même semaine (les bonus ne se reportent pas à la semaine suivante) — le détail est dans l'onglet "Récap semaine".</div>
 
   <div class="settings-toggle-row"><button id="settingsBtn">⚙️ Réglages parent (code requis)</button></div>
 
@@ -522,13 +575,19 @@
   // days: optional array of day indices (0=Lun ... 6=Dim) this task applies to. Omit = every day.
   // "dejeuner" is special-cased in tasksForDay() below instead of using `days`:
   // on school days it only applies if that child's canteen toggle is off.
+  // adultOnly: marking the task DONE (not just undoing it) requires the parent
+  // code. bonusPair: the id of the other bonus chore that can compensate a
+  // raté on this one (see computeWeekBonusTasks).
   const TASKS = [
-    { id: "matin", emoji: "🦷", label: "Dents — matin" },
-    { id: "soir", emoji: "🌙", label: "Dents — soir" },
-    { id: "petitdej", emoji: "🍽️", label: "Petit-déj (table)" },
-    { id: "dejeuner", emoji: "🍽️", label: "Déjeuner (table)" },
-    { id: "diner", emoji: "🍽️", label: "Dîner (table)" },
-    { id: "devoirs", emoji: "📚", label: "Devoirs" }
+    { id: "petitdej", emoji: "☕🥐", label: "Petit-déj (table)" },
+    { id: "matin", emoji: "🦷☀️", label: "Dents — matin" },
+    { id: "dejeuner", emoji: "🥩🍟", label: "Déjeuner (table)" },
+    { id: "devoirs", emoji: "📚", label: "Devoirs" },
+    { id: "diner", emoji: "🍕🥣", label: "Dîner (table)" },
+    { id: "soir", emoji: "🦷🌙", label: "Dents — soir" },
+    { id: "chambre", emoji: "🧸🧩", label: "Ranger sa chambre", days: [2, 6] },
+    { id: "vaisselle", emoji: "🍽️", label: "Lave-vaisselle", adultOnly: true, bonusPair: "aspirateur" },
+    { id: "aspirateur", emoji: "🧹", label: "Aspirateur", adultOnly: true, bonusPair: "vaisselle" }
   ];
   const CHILDREN = ["faustine", "victoria"];
   const STORAGE_KEY = "famille_routine_v2";
@@ -701,16 +760,43 @@
     });
   }
 
+  // Tally one day for one child, applying the bonus-chore rule:
+  //  - CASE 1: once every base (non-bonus) task for the day is done, any
+  //    bonus done that same day no longer inflates the fraction — it's
+  //    reported instead as "bonusCount" (shown as a badge), and done/total
+  //    stay capped at the base ceiling.
+  //  - CASE 2: while the base tasks aren't all done yet, each bonus done
+  //    nudges "done" up by one (never past the base total) without ever
+  //    touching the total itself. If that push happens to complete the base
+  //    total, it still doesn't count as "case 1" — only completing the base
+  //    tasks themselves switches into case 1.
+  function tallyDayForChild(rec, applicable) {
+    let regDone = 0, regTotal = 0, bonusDoneCount = 0;
+    applicable.forEach(t => {
+      if (rec[t.id] === 'na') return;
+      if (t.adultOnly) {
+        if (rec[t.id] === true) bonusDoneCount += 1;
+        return; // bonus chores never add to the base total
+      }
+      regTotal += 1;
+      if (rec[t.id] === true) regDone += 1;
+    });
+    const allRegularDone = regTotal > 0 && regDone === regTotal;
+    if (allRegularDone && bonusDoneCount > 0) {
+      return { done: regDone, total: regTotal, bonusCount: bonusDoneCount };
+    }
+    const done = regTotal > 0 ? Math.min(regDone + bonusDoneCount, regTotal) : regDone;
+    return { done, total: regTotal, bonusCount: 0 };
+  }
+
   function dayCompletion(dateStr, dayIdx) {
     let done = 0, total = 0;
     CHILDREN.forEach(child => {
       const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
       const applicable = tasksForDay(dayIdx, isCantineOff(rec));
-      applicable.forEach(t => {
-        if (rec[t.id] === 'na') return; // not applicable today: excluded from the total
-        total += 1;
-        if (rec[t.id] === true) done += 1;
-      });
+      const tally = tallyDayForChild(rec, applicable);
+      done += tally.done;
+      total += tally.total;
     });
     return { done, total };
   }
@@ -718,13 +804,8 @@
   function childDayCompletion(child, dateStr, dayIdx) {
     const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
     const applicable = tasksForDay(dayIdx, isCantineOff(rec));
-    let done = 0, total = 0;
-    applicable.forEach(t => {
-      if (rec[t.id] === 'na') return; // not applicable today: excluded from the total
-      total += 1;
-      if (rec[t.id] === true) done += 1;
-    });
-    return { done, total, pct: total ? (done / total * 100) : 0 };
+    const tally = tallyDayForChild(rec, applicable);
+    return { done: tally.done, total: tally.total, bonusCount: tally.bonusCount, pct: tally.total ? (tally.done / tally.total * 100) : 0 };
   }
 
   function recapCellClass(stats) {
@@ -732,6 +813,75 @@
     if (stats.pct >= 100) return 'full';
     if (stats.pct > 0) return 'partial';
     return 'zero';
+  }
+
+  // Per-task count of missed occurrences this week, for a given child —
+  // excludes the adult-only bonus chores, which get their own
+  // compensation-aware section (see computeWeekBonusTasks).
+  function computeWeekMisses(child) {
+    const today = toDateStr(new Date());
+    const misses = {}; // taskId -> count
+    weekDates.forEach((d, i) => {
+      const dateStr = toDateStr(d);
+      if (dateStr > today) return; // not lived yet — can't count as a miss
+      const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
+      const applicable = tasksForDay(i, isCantineOff(rec));
+      applicable.forEach(t => {
+        if (t.adultOnly) return;
+        if (rec[t.id] === 'na') return;
+        if (rec[t.id] !== true) misses[t.id] = (misses[t.id] || 0) + 1;
+      });
+    });
+    return misses;
+  }
+
+  // For each adult-only bonus chore, tally this week's ratés (days missed)
+  // and how many days its paired chore was done (the source of a
+  // compensating bonus: doing aspirateur a given day covers a raté on
+  // lave-vaisselle that same week, and vice versa). Only days up to today
+  // count — a day that hasn't happened yet isn't a raté. Bonuses never roll
+  // over to another week (this always looks at the current week only).
+  function computeWeekBonusTasks(child) {
+    const today = toDateStr(new Date());
+    return TASKS.filter(t => t.adultOnly).map(task => {
+      let missed = 0, pairedDone = 0;
+      weekDates.forEach(d => {
+        const dateStr = toDateStr(d);
+        if (dateStr > today) return; // not lived yet
+        const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
+        if (rec[task.id] !== true) missed += 1;
+        if (task.bonusPair && rec[task.bonusPair] === true) pairedDone += 1;
+      });
+      const bonusUsed = Math.min(missed, pairedDone);
+      return { task, netMissed: missed - bonusUsed, unusedBonus: pairedDone - bonusUsed };
+    });
+  }
+
+  function renderRecapMisses(child) {
+    const container = document.getElementById('recapMisses' + capitalize(child));
+    if (!container) return;
+    const misses = computeWeekMisses(child);
+    const entries = TASKS.filter(t => !t.adultOnly && misses[t.id]);
+    if (!entries.length) {
+      container.innerHTML = `<div class="recap-empty">Aucune tâche ratée cette semaine 🌟</div>`;
+      return;
+    }
+    container.innerHTML = entries.map(t =>
+      `<div class="recap-miss-line">${t.emoji} ${t.label} : <b>${misses[t.id]}×</b></div>`
+    ).join('');
+  }
+
+  // Bonus tasks stay positive-only in the recap: no "raté" wording, just the
+  // bonus reserve earned this week (nothing shown when there's none to report).
+  function renderRecapBonus(child) {
+    const container = document.getElementById('recapBonus' + capitalize(child));
+    if (!container) return;
+    const bonusInfo = computeWeekBonusTasks(child);
+    container.innerHTML = bonusInfo
+      .filter(({ unusedBonus }) => unusedBonus > 0)
+      .map(({ task, unusedBonus }) =>
+        `<div class="recap-bonus-line ok">${task.emoji} ${task.label} : ${unusedBonus} bonus en réserve 🎁</div>`
+      ).join('');
   }
 
   function renderRecap() {
@@ -750,6 +900,10 @@
         <div class="recap-pct ${recapCellClass(vStats)}">${vStats.total ? Math.round(vStats.pct) + '%' : '—'}</div>
       `;
       container.appendChild(row);
+    });
+    CHILDREN.forEach(child => {
+      renderRecapMisses(child);
+      renderRecapBonus(child);
     });
   }
 
@@ -773,19 +927,17 @@
     const isoYear = parseInt(isoYearStr, 10);
     const week = parseInt(wStr, 10);
     const monday = mondayOfIsoWeek(isoYear, week);
-    let done = 0, total = 0;
+    const counters = { done: 0, total: 0 };
     for (let i = 0; i < 7; i++) {
       const d = new Date(monday); d.setDate(monday.getDate() + i);
       const dateStr = toDateStr(d);
       const rec = (db[wKey] && db[wKey][child] && db[wKey][child][dateStr]) || {};
       const applicable = tasksForDay(i, isCantineOff(rec));
-      applicable.forEach(t => {
-        if (rec[t.id] === 'na') return; // not applicable that day: excluded from the total
-        total += 1;
-        if (rec[t.id] === true) done += 1;
-      });
+      const tally = tallyDayForChild(rec, applicable);
+      counters.done += tally.done;
+      counters.total += tally.total;
     }
-    return { done, total, pct: total ? (done / total * 100) : 0 };
+    return { done: counters.done, total: counters.total, pct: counters.total ? (counters.done / counters.total * 100) : 0 };
   }
 
   const MONTH_LABELS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
@@ -800,7 +952,7 @@
     const year = parseInt(yStr, 10);
     const month = parseInt(mStr, 10); // 1-12
     const daysInMonth = new Date(year, month, 0).getDate();
-    let done = 0, total = 0;
+    const counters = { done: 0, total: 0 };
     for (let day = 1; day <= daysInMonth; day++) {
       const d = new Date(year, month - 1, day);
       const dateStr = toDateStr(d);
@@ -809,13 +961,11 @@
       const dWeekKey = `${info.isoYear}-W${pad(info.week)}`;
       const rec = (db[dWeekKey] && db[dWeekKey][child] && db[dWeekKey][child][dateStr]) || {};
       const applicable = tasksForDay(dayIdx, isCantineOff(rec));
-      applicable.forEach(t => {
-        if (rec[t.id] === 'na') return;
-        total += 1;
-        if (rec[t.id] === true) done += 1;
-      });
+      const tally = tallyDayForChild(rec, applicable);
+      counters.done += tally.done;
+      counters.total += tally.total;
     }
-    return { done, total, pct: total ? (done / total * 100) : 0 };
+    return { done: counters.done, total: counters.total, pct: counters.total ? (counters.done / counters.total * 100) : 0 };
   }
 
   // Returns the highest tier (for that period type) whose threshold is met
@@ -978,6 +1128,7 @@
       const rec = db[weekKey][child][selectedDateStr];
       const applicable = tasksForDay(selectedDayIdx, isCantineOff(rec));
       renderCantineToggle(child, rec);
+      renderBonusBadge(child, rec, applicable);
       const container = document.getElementById(child === 'faustine' ? 'tasksFaustine' : 'tasksVictoria');
       container.innerHTML = "";
       applicable.forEach(task => {
@@ -990,6 +1141,7 @@
         const isSelected = selectedTasks.has(selKey(child, task.id));
         const btn = document.createElement('div');
         let cls = 'task-btn' + (state === 'done' ? ' done' : (state === 'na' ? ' na' : ''));
+        if (task.adultOnly) cls += ' bonus-task';
         if (selectMode) {
           if (canSelect) {
             cls += ' selectable';
@@ -1052,6 +1204,22 @@
     container.appendChild(btn);
   }
 
+  // Shows "⭐ X bonus ⭐" in the child's name banner once her base tasks for
+  // the day are all done and at least one bonus chore is done too (case 1
+  // of tallyDayForChild) — hidden otherwise.
+  function renderBonusBadge(child, rec, applicable) {
+    const badge = document.getElementById('bonusBadge' + capitalize(child));
+    if (!badge) return;
+    const tally = tallyDayForChild(rec, applicable);
+    if (tally.bonusCount > 0) {
+      badge.textContent = `⭐ ${tally.bonusCount} bonus ⭐`;
+      badge.classList.add('show');
+    } else {
+      badge.textContent = '';
+      badge.classList.remove('show');
+    }
+  }
+
   function toggleCantine(child) {
     ensureDay(selectedDateStr);
     const rec = db[weekKey][child][selectedDateStr];
@@ -1102,20 +1270,32 @@
     const val = rec[taskId];
     const state = val === true ? 'done' : (val === 'na' ? 'na' : 'todo');
     if (state === 'todo') {
-      rec[taskId] = true;
-      saveDb();
-      renderTasks();
-      renderDaysNav();
-      const container = document.getElementById('tasks' + capitalize(child));
-      const newBtn = container.querySelector(`.task-btn[data-task-id="${taskId}"]`);
-      if (newBtn) {
-        newBtn.classList.remove('bounce');
-        void newBtn.offsetWidth;
-        newBtn.classList.add('bounce');
+      const task = TASKS.find(t => t.id === taskId);
+      if (task && task.adultOnly) {
+        // Bonus chores (lave-vaisselle, aspirateur): only an adult can mark
+        // them done, not just undo them — the code is required either way.
+        askForCode(() => markTaskDone(child, taskId));
+      } else {
+        markTaskDone(child, taskId);
       }
     } else {
       // already done or already marked "na": require the parent code, then offer a choice
       askForCode(() => openTaskAdminModal(child, taskId, state));
+    }
+  }
+
+  function markTaskDone(child, taskId) {
+    const rec = db[weekKey][child][selectedDateStr];
+    rec[taskId] = true;
+    saveDb();
+    renderTasks();
+    renderDaysNav();
+    const container = document.getElementById('tasks' + capitalize(child));
+    const newBtn = container.querySelector(`.task-btn[data-task-id="${taskId}"]`);
+    if (newBtn) {
+      newBtn.classList.remove('bounce');
+      void newBtn.offsetWidth;
+      newBtn.classList.add('bounce');
     }
   }
 
