@@ -277,18 +277,30 @@
   .recap-bonus-line.ok { background: rgba(64,192,87,0.14); color: #69db7c; }
   .recap-bonus-line.warn { background: rgba(255,192,120,0.14); color: #ffc078; }
 
-  .rewards-box {
-    margin-top: 14px;
+  /* "Fin de semaine" streak proposal box (Récap semaine tab) */
+  .streak-box {
+    margin-top: 12px;
     background: var(--surface-2);
+    border: 1.5px solid var(--border);
     border-radius: 14px;
-    padding: 10px 14px;
+    padding: 12px 14px;
     font-size: 12.5px;
   }
-  .reward-mode { font-weight: 700; margin-bottom: 4px; }
-  .reward-result.success { color: #69db7c; }
-  .reward-result.miss { color: var(--muted); }
-  .reward-progress-bar { height: 10px; background: var(--surface); border-radius: 6px; overflow: hidden; margin: 6px 0; }
-  .reward-progress-fill { height: 100%; background: linear-gradient(90deg,#ffd43b,#fab005); }
+  .streak-title { font-weight: 700; margin-bottom: 6px; font-size: 13px; }
+  .streak-pct { margin-bottom: 8px; color: var(--muted); }
+  .streak-pct b { color: var(--ink); }
+  .streak-msg { color: var(--muted); font-style: italic; }
+  .streak-msg.locked { color: var(--muted); }
+  .streak-decided { font-weight: 600; }
+  .streak-decided.pris { color: #69db7c; }
+  .streak-decided.reporte { color: #ffc078; }
+  .streak-actions { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .streak-btn {
+    border: none; border-radius: 10px; padding: 8px 14px; font-size: 12.5px; font-weight: 700;
+    font-family: inherit; cursor: pointer;
+  }
+  .streak-btn.take { background: #fab005; color: #2d2a26; }
+  .streak-btn.report { background: var(--surface); border: 1.5px solid var(--border); color: var(--ink); }
 
   .celebration {
     display: none;
@@ -367,47 +379,8 @@
   .task-admin-btn.warn { border-color: #fab005; background: rgba(250,176,5,0.14); }
   .task-admin-btn:active { transform: scale(0.98); }
 
-  .settings-children { display: flex; gap: 16px; flex-wrap: wrap; }
-  .settings-child { flex: 1; min-width: 260px; }
-  .settings-child h3 { margin: 0 0 8px; font-size: 15px; }
-  .settings-child .settings-hint { font-size: 11.5px; color: var(--muted); margin: -4px 0 10px; line-height: 1.4; }
-
-  .tier-table { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
-  .tier-row {
-    background: var(--surface-2);
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 10px 12px;
-  }
-  .tier-row-top { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-  .tier-period, .tier-threshold {
-    padding: 7px 8px; border-radius: 8px; border: 1.5px solid var(--border);
-    background: var(--surface); color: var(--ink); font-family: inherit; font-size: 12.5px;
-  }
-  .tier-period { flex: 1.1; }
-  .tier-threshold { flex: 0.7; min-width: 0; }
-  .tier-pct-suffix { font-size: 12.5px; color: var(--muted); }
-  .tier-remove {
-    margin-left: auto; background: none; border: none; cursor: pointer; font-size: 15px;
-    color: var(--muted); padding: 4px 6px; border-radius: 8px; line-height: 1;
-  }
-  .tier-remove:hover { background: rgba(255,255,255,0.06); }
-  .tier-gifts {
-    width: 100%; padding: 8px 10px; border-radius: 8px; border: 1.5px solid var(--border);
-    background: var(--surface); color: var(--ink); font-family: inherit; font-size: 12.5px; resize: vertical;
-  }
-  .tier-add-btn {
-    background: var(--surface-2); border: 1.5px dashed var(--border); color: var(--muted);
-    border-radius: 10px; padding: 8px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; width: 100%;
-    margin-bottom: 14px;
-  }
-  .tier-add-btn:hover { color: var(--ink); border-color: var(--muted); }
-
-  .tier-ladder { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-  .tier-chip {
-    display: inline-block; font-size: 11px; background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 3px 8px; color: var(--muted);
-  }
+  .rules-summary { font-size: 13px; line-height: 1.7; color: var(--ink); }
+  .rules-summary b { color: #ffc078; }
 
   .select-toggle-row { text-align: center; margin-bottom: 20px; }
   .select-toggle-btn {
@@ -476,14 +449,12 @@
       <div class="child-title faustine">👧 Faustine<span class="bonus-badge" id="bonusBadgeFaustine"></span></div>
       <div class="cantine-row" id="cantineFaustine"></div>
       <div class="tasks" id="tasksFaustine"></div>
-      <div class="rewards-box" id="rewards-faustine"></div>
     </div>
 
     <div class="child-section victoria">
       <div class="child-title victoria">👧 Victoria ✨<span class="bonus-badge" id="bonusBadgeVictoria"></span></div>
       <div class="cantine-row" id="cantineVictoria"></div>
       <div class="tasks" id="tasksVictoria"></div>
-      <div class="rewards-box" id="rewards-victoria"></div>
     </div>
 
     <div class="celebration" id="celebration">🎉 Bravo les filles, toutes les tâches de la journée sont faites ! 🌟</div>
@@ -505,11 +476,13 @@
         <div class="recap-col-title faustine">👧 Faustine</div>
         <div class="recap-miss-list" id="recapMissesFaustine"></div>
         <div class="recap-bonus" id="recapBonusFaustine"></div>
+        <div class="streak-box" id="streakFaustine"></div>
       </div>
       <div class="recap-col">
         <div class="recap-col-title victoria">👧 Victoria</div>
         <div class="recap-miss-list" id="recapMissesVictoria"></div>
         <div class="recap-bonus" id="recapBonusVictoria"></div>
+        <div class="streak-box" id="streakVictoria"></div>
       </div>
     </div>
   </div>
@@ -536,24 +509,26 @@
 <!-- Settings modal -->
 <div class="modal-overlay" id="settingsOverlay">
   <div class="modal-box wide">
-    <div class="modal-title">⚙️ Réglages récompenses</div>
-    <div class="settings-children">
-      <div class="settings-child">
-        <h3>👧 Faustine</h3>
-        <div class="settings-hint">Un palier = un seuil de réussite (%) sur une semaine ou un mois, avec sa liste de cadeaux (un par ligne). Le palier le plus haut atteint est celui qui compte.</div>
-        <div class="tier-table" id="tierTableFaustine"></div>
-        <button type="button" class="tier-add-btn" data-child="faustine">+ Ajouter un palier</button>
-      </div>
-      <div class="settings-child">
-        <h3>👧 Victoria</h3>
-        <div class="settings-hint">Un palier = un seuil de réussite (%) sur une semaine ou un mois, avec sa liste de cadeaux (un par ligne). Le palier le plus haut atteint est celui qui compte.</div>
-        <div class="tier-table" id="tierTableVictoria"></div>
-        <button type="button" class="tier-add-btn" data-child="victoria">+ Ajouter un palier</button>
-      </div>
+    <div class="modal-title">⚙️ Réglages parent — récompenses</div>
+    <div class="rules-summary">
+      Chaque semaine peut proposer une récompense selon la <b>moyenne de réussite depuis le début de la série en cours</b> (tâches bonus non comprises) — pas juste la semaine en cours :
+      <br><br>
+      <b>Semaine 1</b> : 2€ à 80%, 1€ à 60%, rien en dessous.
+      <br>
+      Si la récompense est <b>reportée</b> → <b>semaine 2</b> : moyenne des 2 semaines, 5€ à 80%, 3€ à 60%.
+      <br>
+      Si on reporte encore, la <b>semaine 3</b> passe automatiquement, sans décision (elle compte quand même dans la moyenne).
+      <br>
+      Report maximum : <b>semaine 4 (le mois)</b> : moyenne des 4 semaines, 10€ à 80%, 7€ à 60% — dernière étape, plus de report possible ensuite.
+      <br><br>
+      On ne peut donc reporter que jusqu'à la semaine 2 ou jusqu'à la semaine 4 (3 semaines de report maximum).
+      <br>
+      Si la moyenne passe sous 60% à une étape, rien n'est perdu ni remis à zéro : on avise au cas par cas, et la moyenne continue de se construire la semaine suivante.
+      <br><br>
+      La proposition (prendre / reporter) se fait dans l'onglet "Récap semaine", dans la case "Fin de semaine" de chaque enfant.
     </div>
     <div class="modal-actions">
-      <button class="modal-btn cancel" id="settingsCancel">Annuler</button>
-      <button class="modal-btn confirm" id="settingsSave">Enregistrer</button>
+      <button class="modal-btn cancel" id="settingsCancel">Fermer</button>
     </div>
   </div>
 </div>
@@ -591,7 +566,7 @@
   ];
   const CHILDREN = ["faustine", "victoria"];
   const STORAGE_KEY = "famille_routine_v2";
-  const REWARDS_KEY = "famille_rewards_v1";
+  const REWARDS_KEY = "famille_rewards_v3";
   const DAY_LABELS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
 
   let storageAvailable = true;
@@ -656,47 +631,28 @@
     } catch (e) { /* ignore */ }
   }
 
-  // A child's reward config is a flat table of tiers. Each tier is a
-  // threshold (%) for a given period type ("semaine" or "mois"), with its
-  // own list of possible gifts. For a finished period, the highest tier
-  // whose threshold was reached wins.
-  let tierIdCounter = 0;
-  function makeTierId() { tierIdCounter += 1; return 't' + Date.now().toString(36) + tierIdCounter; }
-
-  function defaultChildRewardConfig() {
-    return {
-      table: [
-        { id: makeTierId(), period: 'semaine', threshold: 60, gifts: ["Choisir le dessert du dimanche"], lastGift: null },
-        { id: makeTierId(), period: 'semaine', threshold: 80, gifts: ["20 minutes d'écran en plus", "Choisir le film du soir en famille"], lastGift: null },
-        { id: makeTierId(), period: 'semaine', threshold: 100, gifts: ["Une sortie au parc rien qu'à elle"], lastGift: null },
-        { id: makeTierId(), period: 'mois', threshold: 80, gifts: ["Sortie en famille au choix (cinéma, piscine...)", "Un petit jouet ou livre au choix", "Un moment 1-à-1 avec Papa ou Maman"], lastGift: null }
-      ],
-      history: [] // { type: 'semaine'|'mois', periodKey, pct, tierThreshold, gift }
-    };
+  // Take-or-report weekly streak. Each child has one `streak`:
+  //  - streakWeeks: ordered weekKeys accumulated since the streak's last
+  //    "prendre" (or since the very start). The reward at each checkpoint is
+  //    evaluated on the AVERAGE over all of these weeks pooled together —
+  //    not just the latest week's own %. Its length also drives the stage:
+  //    1 week = 'A' (semaine 1), 2 = 'B' (semaine 2), 3 = 'C' (semaine 3,
+  //    silent pass-through, no decision offered), 4+ = 'D' (semaine 4 / "le
+  //    mois", the final checkpoint — no further reporting past it; if
+  //    nothing is decided there, extra weeks just keep accumulating into the
+  //    average rather than anything being lost or force-reset).
+  //  - weekKey: the weekKey this streak was last synced against (detects a
+  //    new week starting so `decided` can reset for a fresh proposal).
+  //  - decided: whether prendre/reporter has already been chosen this week.
+  //  - lastDecision: the most recent resolved checkpoint, for display only.
+  function defaultChildStreak() {
+    return { streakWeeks: [], weekKey: null, decided: false, lastDecision: null };
   }
 
   function defaultRewards() {
     const children = {};
-    CHILDREN.forEach(c => children[c] = defaultChildRewardConfig());
+    CHILDREN.forEach(c => children[c] = { streak: defaultChildStreak() });
     return { children };
-  }
-
-  // Best-effort migration from the older single-threshold weekly/cumulative
-  // model, so a child config saved before this feature still keeps its gift
-  // lists instead of silently resetting.
-  function migrateChildConfig(parsed, legacyThreshold) {
-    if (parsed && Array.isArray(parsed.table)) return parsed; // already current format
-    const cfg = defaultChildRewardConfig();
-    cfg.table = [];
-    if (parsed && parsed.mode === 'cumulative' && Array.isArray(parsed.cumulativeGifts) && parsed.cumulativeGifts.length) {
-      cfg.table.push({ id: makeTierId(), period: 'mois', threshold: legacyThreshold || 80, gifts: parsed.cumulativeGifts, lastGift: parsed.lastCumulativeGift || null });
-    }
-    if (parsed && Array.isArray(parsed.weeklyGifts) && parsed.weeklyGifts.length) {
-      cfg.table.push({ id: makeTierId(), period: 'semaine', threshold: legacyThreshold || 80, gifts: parsed.weeklyGifts, lastGift: parsed.lastWeeklyGift || null });
-    }
-    if (!cfg.table.length) cfg.table = defaultChildRewardConfig().table;
-    cfg.history = [];
-    return cfg;
   }
 
   function loadRewards() {
@@ -705,13 +661,12 @@
         const raw = localStorage.getItem(REWARDS_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          const legacyThreshold = typeof parsed.threshold === 'number' ? parsed.threshold : 80;
           if (!parsed.children) parsed.children = {};
           CHILDREN.forEach(c => {
-            parsed.children[c] = migrateChildConfig(parsed.children[c], legacyThreshold);
+            if (!parsed.children[c] || !parsed.children[c].streak || !Array.isArray(parsed.children[c].streak.streakWeeks)) {
+              parsed.children[c] = { streak: defaultChildStreak() };
+            }
           });
-          delete parsed.threshold;
-          delete parsed.cumulativeTarget;
           return parsed;
         }
       } catch (e) { /* fall through to default */ }
@@ -904,6 +859,8 @@
     CHILDREN.forEach(child => {
       renderRecapMisses(child);
       renderRecapBonus(child);
+      syncWeekStreak(child);
+      renderStreakBox(child);
     });
   }
 
@@ -922,15 +879,22 @@
     }
   }
 
+  // Week stats "to date": only counts days already lived (dateStr <= today).
+  // For a week other than the current one, every one of its days is already
+  // in the past, so this equals a full 7-day tally; for the week still in
+  // progress it gives a live percentage that isn't artificially dragged down
+  // by days that haven't happened yet.
   function computeWeekStats(child, wKey) {
     const [isoYearStr, wStr] = wKey.split('-W');
     const isoYear = parseInt(isoYearStr, 10);
     const week = parseInt(wStr, 10);
     const monday = mondayOfIsoWeek(isoYear, week);
+    const today = toDateStr(new Date());
     const counters = { done: 0, total: 0 };
     for (let i = 0; i < 7; i++) {
       const d = new Date(monday); d.setDate(monday.getDate() + i);
       const dateStr = toDateStr(d);
+      if (dateStr > today) continue;
       const rec = (db[wKey] && db[wKey][child] && db[wKey][child][dateStr]) || {};
       const applicable = tasksForDay(i, isCantineOff(rec));
       const tally = tallyDayForChild(rec, applicable);
@@ -940,161 +904,144 @@
     return { done: counters.done, total: counters.total, pct: counters.total ? (counters.done / counters.total * 100) : 0 };
   }
 
-  const MONTH_LABELS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
-  function formatMonthLabel(monthKey) {
-    const [y, m] = monthKey.split('-');
-    return `${MONTH_LABELS[parseInt(m, 10) - 1]} ${y}`;
-  }
-  function toMonthKey(date) { return `${date.getFullYear()}-${pad(date.getMonth() + 1)}`; }
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-  function computeMonthStats(child, monthKey) {
-    const [yStr, mStr] = monthKey.split('-');
-    const year = parseInt(yStr, 10);
-    const month = parseInt(mStr, 10); // 1-12
-    const daysInMonth = new Date(year, month, 0).getDate();
+  // --- Rewards: take-or-report weekly streak ---
+  // Fixed formula, not user-editable (the rule is spelled out as plain text
+  // in "Réglages parent"). Stage 'C' (semaine 3) has no tier: it's a silent
+  // pass-through week — no decision is ever offered there, but it still
+  // counts into the average for the next checkpoint.
+  function weeklyStreakTier(stage, pct) {
+    const tiers = {
+      A: [{ min: 80, amount: 2 }, { min: 60, amount: 1 }],
+      B: [{ min: 80, amount: 5 }, { min: 60, amount: 3 }],
+      D: [{ min: 80, amount: 10 }, { min: 60, amount: 7 }]
+    };
+    const list = tiers[stage] || [];
+    for (const t of list) if (pct >= t.min) return t;
+    return null;
+  }
+
+  const STAGE_LABELS = { A: 'Semaine 1', B: 'Semaine 2', C: 'Semaine 3', D: 'Semaine 4 (le mois)' };
+
+  // The stage is simply derived from how many weeks have accumulated in the
+  // current streak — 1 => A, 2 => B, 3 => C, 4 or more => D (D is the final
+  // checkpoint: if nothing is decided there, extra weeks just keep piling
+  // into the average rather than being capped or reset).
+  function stageForWeekCount(n) {
+    if (n <= 1) return 'A';
+    if (n === 2) return 'B';
+    if (n === 3) return 'C';
+    return 'D';
+  }
+
+  // Pooled done/total across every week in the streak — the checkpoint
+  // reward is always evaluated on this running average, not on a single
+  // week's own %.
+  function computeStreakAverageStats(child, weekKeys) {
     const counters = { done: 0, total: 0 };
-    for (let day = 1; day <= daysInMonth; day++) {
-      const d = new Date(year, month - 1, day);
-      const dateStr = toDateStr(d);
-      const dayIdx = (d.getDay() + 6) % 7; // convert Sun=0..Sat=6 to Lun=0..Dim=6
-      const info = isoWeekInfo(d);
-      const dWeekKey = `${info.isoYear}-W${pad(info.week)}`;
-      const rec = (db[dWeekKey] && db[dWeekKey][child] && db[dWeekKey][child][dateStr]) || {};
-      const applicable = tasksForDay(dayIdx, isCantineOff(rec));
-      const tally = tallyDayForChild(rec, applicable);
-      counters.done += tally.done;
-      counters.total += tally.total;
-    }
+    weekKeys.forEach(wKey => {
+      const s = computeWeekStats(child, wKey);
+      counters.done += s.done;
+      counters.total += s.total;
+    });
     return { done: counters.done, total: counters.total, pct: counters.total ? (counters.done / counters.total * 100) : 0 };
   }
 
-  // Returns the highest tier (for that period type) whose threshold is met
-  // by pct, or null if no configured tier is reached.
-  function evaluateTier(cfg, periodType, pct) {
-    let best = null;
-    cfg.table.forEach(row => {
-      if (row.period !== periodType) return;
-      if (pct >= row.threshold && (!best || row.threshold > best.threshold)) best = row;
-    });
-    return best;
+  // Brings a child's streak up to date with the current `weekKey`: the
+  // current week is added to streakWeeks (if not already the last one
+  // tracked), and `decided` resets so a fresh proposal (using the updated,
+  // larger average) is offered for the new week. Nothing is ever force-reset
+  // or auto-cashed-out here — if a decision is skipped, the average simply
+  // keeps accumulating until a parent explicitly acts ("on avisera, mais on
+  // n'annule pas tout").
+  function syncWeekStreak(child) {
+    const streak = rewards.children[child].streak;
+    if (streak.weekKey !== weekKey) {
+      streak.weekKey = weekKey;
+      streak.decided = false;
+    }
+    if (!streak.streakWeeks.length || streak.streakWeeks[streak.streakWeeks.length - 1] !== weekKey) {
+      streak.streakWeeks.push(weekKey);
+    }
+    saveRewards();
   }
 
-  // Every distinct "YYYY-MM" that appears in any tracked day, across children.
-  function getTrackedMonths() {
-    const months = new Set();
-    Object.keys(db).forEach(wKey => {
-      CHILDREN.forEach(child => {
-        const childDb = db[wKey][child] || {};
-        Object.keys(childDb).forEach(dateStr => months.add(dateStr.slice(0, 7)));
+  // Parent-confirmed decision for the CURRENT checkpoint (evaluated on the
+  // streak's running average). "Prendre" cashes out and starts a brand new
+  // streak from scratch; "reporter" just records the choice — the average
+  // keeps accumulating regardless, whether reported explicitly or left
+  // undecided.
+  function decideStreak(child, action) {
+    const streak = rewards.children[child].streak;
+    if (streak.decided) return;
+    const stage = stageForWeekCount(streak.streakWeeks.length);
+    if (stage === 'C') return; // no decision possible at the silent pass-through week
+    const stats = computeStreakAverageStats(child, streak.streakWeeks);
+    const tier = weeklyStreakTier(stage, stats.pct);
+    if (!tier) return; // nothing earned yet at this checkpoint — nothing to decide
+    if (action === 'prendre') {
+      streak.lastDecision = { stage, pct: Math.round(stats.pct), weeks: streak.streakWeeks.length, amount: tier.amount, action: 'pris' };
+      streak.streakWeeks = [];
+    } else if (action === 'reporter') {
+      if (stage === 'D') return; // no reporting past the final checkpoint
+      streak.lastDecision = { stage, pct: Math.round(stats.pct), weeks: streak.streakWeeks.length, amount: tier.amount, action: 'reporté' };
+      // streakWeeks stays as-is — it keeps growing as new weeks are synced.
+    } else {
+      return;
+    }
+    streak.decided = true;
+    saveRewards();
+    renderStreakBox(child);
+  }
+
+  function renderStreakBox(child) {
+    const container = document.getElementById('streak' + capitalize(child));
+    if (!container) return;
+    const streak = rewards.children[child].streak;
+    const n = streak.streakWeeks.length;
+    const stage = stageForWeekCount(n);
+
+    if (stage === 'C') {
+      container.innerHTML = `
+        <div class="streak-title">🎁 Fin de semaine — ${STAGE_LABELS.C}</div>
+        <div class="streak-msg locked">🔒 Pas de décision cette semaine — rendez-vous à la semaine 4 (le mois). Cette semaine compte quand même dans la moyenne.</div>
+      `;
+      return;
+    }
+
+    const stats = computeStreakAverageStats(child, streak.streakWeeks);
+    const pctRounded = Math.round(stats.pct);
+    const tier = weeklyStreakTier(stage, stats.pct);
+    const label = (stage === 'D' && n > 4) ? `Semaine 4+ (${n} semaines cumulées)` : STAGE_LABELS[stage];
+
+    let html = `<div class="streak-title">🎁 Fin de semaine — ${label}</div>`;
+    html += `<div class="streak-pct">Moyenne sur ${n} semaine${n > 1 ? 's' : ''} : <b>${stats.total ? pctRounded + '%' : '—'}</b></div>`;
+
+    if (streak.decided) {
+      const d = streak.lastDecision;
+      if (d && d.action === 'pris') {
+        html += `<div class="streak-decided pris">✅ Récompense prise : ${d.amount}€</div>`;
+      } else if (d && d.action === 'reporté') {
+        html += `<div class="streak-decided reporte">➡️ Reporté — on continue, la moyenne se poursuit la semaine prochaine.</div>`;
+      }
+    } else if (tier) {
+      html += `<div class="streak-actions">` +
+        `<button type="button" class="streak-btn take" data-child="${child}" data-action="prendre">Prendre ${tier.amount}€</button>` +
+        (stage !== 'D' ? `<button type="button" class="streak-btn report" data-child="${child}" data-action="reporter">Reporter</button>` : '') +
+        `</div>`;
+    } else {
+      html += `<div class="streak-msg">Pas de récompense à ce palier pour l'instant (moins de 60% de moyenne) — rien n'est perdu, on continue et on en reparle.</div>`;
+    }
+
+    container.innerHTML = html;
+    container.querySelectorAll('.streak-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const c = btn.dataset.child, action = btn.dataset.action;
+        askForCode(() => decideStreak(c, action));
       });
     });
-    return months;
   }
-
-  function pickGift(list, lastPicked) {
-    if (!list || !list.length) return null;
-    if (list.length === 1) return list[0];
-    let choice, attempts = 0;
-    do {
-      choice = list[Math.floor(Math.random() * list.length)];
-      attempts++;
-    } while (choice === lastPicked && attempts < 10);
-    return choice;
-  }
-
-  function finalizePeriodsIfNeeded() {
-    let changed = false;
-    const currentMonthKey = toMonthKey(new Date());
-
-    // Weeks: any tracked week other than the one currently in progress.
-    Object.keys(db).forEach(wKey => {
-      if (wKey === weekKey) return; // current week is still in progress
-      CHILDREN.forEach(child => {
-        const cfg = rewards.children[child];
-        if (cfg.history.some(h => h.type === 'semaine' && h.periodKey === wKey)) return; // already processed
-        const stats = computeWeekStats(child, wKey);
-        if (stats.total === 0) return; // nothing tracked that week
-        const tier = evaluateTier(cfg, 'semaine', stats.pct);
-        const entry = { type: 'semaine', periodKey: wKey, pct: Math.round(stats.pct), tierThreshold: tier ? tier.threshold : null, gift: null };
-        if (tier) {
-          const gift = pickGift(tier.gifts, tier.lastGift);
-          tier.lastGift = gift;
-          entry.gift = gift;
-        }
-        cfg.history.push(entry);
-        if (cfg.history.length > 150) cfg.history.shift();
-        changed = true;
-      });
-    });
-
-    // Months: any tracked month strictly before the current one.
-    const trackedMonths = getTrackedMonths();
-    trackedMonths.forEach(monthKey => {
-      if (monthKey >= currentMonthKey) return; // current/future month: not finished yet
-      CHILDREN.forEach(child => {
-        const cfg = rewards.children[child];
-        if (cfg.history.some(h => h.type === 'mois' && h.periodKey === monthKey)) return; // already processed
-        const stats = computeMonthStats(child, monthKey);
-        if (stats.total === 0) return;
-        const tier = evaluateTier(cfg, 'mois', stats.pct);
-        const entry = { type: 'mois', periodKey: monthKey, pct: Math.round(stats.pct), tierThreshold: tier ? tier.threshold : null, gift: null };
-        if (tier) {
-          const gift = pickGift(tier.gifts, tier.lastGift);
-          tier.lastGift = gift;
-          entry.gift = gift;
-        }
-        cfg.history.push(entry);
-        if (cfg.history.length > 150) cfg.history.shift();
-        changed = true;
-      });
-    });
-
-    if (changed) saveRewards();
-  }
-
-  function formatWeekLabel(wKey) {
-    const w = wKey.split('-W')[1];
-    return `semaine ${parseInt(w, 10)}`;
-  }
-
-  function renderRewards() {
-    CHILDREN.forEach(child => {
-      const cfg = rewards.children[child];
-      const container = document.getElementById('rewards-' + child);
-      let html = '';
-      ['semaine', 'mois'].forEach(period => {
-        const rows = cfg.table.filter(r => r.period === period).slice().sort((a, b) => a.threshold - b.threshold);
-        if (!rows.length) return;
-        const periodLabel = period === 'semaine' ? 'Paliers de la semaine' : 'Palier(s) du mois';
-        html += `<div class="reward-mode">🎁 ${periodLabel}</div>`;
-        html += `<div class="tier-ladder">` + rows.map(r =>
-          `<span class="tier-chip">${r.threshold}% → ${r.gifts.length ? r.gifts.join(', ') : '(aucun cadeau défini)'}</span>`
-        ).join('') + `</div>`;
-        // Pick the chronologically most recent entry for this period type (by
-        // periodKey, which sorts correctly as a zero-padded string) rather
-        // than "last pushed" — history can be finalized out of chronological
-        // order (e.g. catching up several skipped weeks/months at once).
-        const periodEntries = cfg.history.filter(h => h.type === period);
-        const lastEntry = periodEntries.length
-          ? periodEntries.reduce((a, b) => (b.periodKey > a.periodKey ? b : a))
-          : null;
-        if (lastEntry) {
-          const label = period === 'semaine' ? formatWeekLabel(lastEntry.periodKey) : formatMonthLabel(lastEntry.periodKey);
-          if (lastEntry.gift) {
-            html += `<div class="reward-result success">${capitalize(label)} : ${lastEntry.pct}% — palier ${lastEntry.tierThreshold}% — <b>${lastEntry.gift}</b> 🎉</div>`;
-          } else {
-            html += `<div class="reward-result miss">${capitalize(label)} : ${lastEntry.pct}% — aucun palier atteint, on retente !</div>`;
-          }
-        } else {
-          html += `<div class="reward-result">Pas encore de ${period === 'semaine' ? 'semaine' : 'mois'} terminé(e).</div>`;
-        }
-      });
-      if (!html) html = `<div class="reward-result">Aucun palier configuré — vas dans les réglages parent pour en ajouter.</div>`;
-      container.innerHTML = html;
-    });
-  }
-
-  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
   function renderDaysNav() {
     const nav = document.getElementById('daysNav');
@@ -1231,7 +1178,6 @@
     saveDb();
     renderTasks();
     renderDaysNav();
-    renderRewards();
   }
 
   function toggleTaskSelection(child, taskId) {
@@ -1354,7 +1300,6 @@
     closeTaskAdminModal();
     renderTasks();
     renderDaysNav();
-    renderRewards();
   }
 
   function openBatchAdminModal(items) {
@@ -1416,7 +1361,6 @@
     selectedTasks.clear();
     renderTasks();
     renderDaysNav();
-    renderRewards();
   }
 
   function closeTaskAdminModal() {
@@ -1442,7 +1386,6 @@
   function renderAll() {
     renderDaysNav();
     renderTasks();
-    renderRewards();
   }
 
   // --- Code modal ---
@@ -1471,73 +1414,16 @@
   document.getElementById('codeConfirm').addEventListener('click', submitCode);
   document.getElementById('codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitCode(); });
 
-  // --- Settings modal (edits a draft copy; only committed on "Enregistrer") ---
-  let settingsDraft = null;
-
-  function cloneRewards(r) { return JSON.parse(JSON.stringify(r)); }
-
-  function renderTierTable(child) {
-    const container = document.getElementById('tierTable' + capitalize(child));
-    container.innerHTML = '';
-    const table = settingsDraft.children[child].table;
-    table.forEach((row, idx) => {
-      const div = document.createElement('div');
-      div.className = 'tier-row';
-      div.innerHTML = `
-        <div class="tier-row-top">
-          <select class="tier-period">
-            <option value="semaine"${row.period === 'semaine' ? ' selected' : ''}>Semaine</option>
-            <option value="mois"${row.period === 'mois' ? ' selected' : ''}>Mois</option>
-          </select>
-          <input type="number" class="tier-threshold" min="1" max="100" value="${row.threshold}">
-          <span class="tier-pct-suffix">%</span>
-          <button type="button" class="tier-remove" title="Supprimer ce palier">🗑️</button>
-        </div>
-        <textarea class="tier-gifts" rows="2" placeholder="Un cadeau par ligne">${row.gifts.join('\n')}</textarea>
-      `;
-      div.querySelector('.tier-period').addEventListener('change', e => { table[idx].period = e.target.value; });
-      div.querySelector('.tier-threshold').addEventListener('input', e => { table[idx].threshold = parseInt(e.target.value, 10) || 0; });
-      div.querySelector('.tier-gifts').addEventListener('input', e => {
-        table[idx].gifts = e.target.value.split('\n').map(s => s.trim()).filter(Boolean);
-      });
-      div.querySelector('.tier-remove').addEventListener('click', () => { table.splice(idx, 1); renderTierTable(child); });
-      container.appendChild(div);
-    });
-  }
-
-  document.querySelectorAll('.tier-add-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const child = btn.dataset.child;
-      settingsDraft.children[child].table.push({ id: makeTierId(), period: 'semaine', threshold: 80, gifts: [], lastGift: null });
-      renderTierTable(child);
-    });
-  });
-
+  // --- Settings modal: now a static rule summary (nothing to edit — the
+  // reward formula is fixed, see weeklyStreakTier). ---
   function openSettings() {
-    settingsDraft = cloneRewards(rewards);
-    CHILDREN.forEach(child => renderTierTable(child));
     document.getElementById('settingsOverlay').classList.add('show');
   }
   function closeSettings() {
     document.getElementById('settingsOverlay').classList.remove('show');
-    settingsDraft = null;
-  }
-  function saveSettings() {
-    CHILDREN.forEach(child => {
-      settingsDraft.children[child].table.forEach(row => {
-        row.threshold = Math.min(100, Math.max(1, row.threshold || 1));
-      });
-    });
-    rewards = settingsDraft;
-    settingsDraft = null;
-    saveRewards();
-    closeSettings();
-    renderDaysNav();
-    renderRewards();
   }
   document.getElementById('settingsBtn').addEventListener('click', () => askForCode(openSettings));
   document.getElementById('settingsCancel').addEventListener('click', closeSettings);
-  document.getElementById('settingsSave').addEventListener('click', saveSettings);
   document.getElementById('tabToday').addEventListener('click', () => switchTab('today'));
   document.getElementById('tabRecap').addEventListener('click', () => switchTab('recap'));
 
@@ -1555,7 +1441,7 @@
     selectedDateStr = toDateStr(today);
     selectedDayIdx = weekDates.findIndex(d => toDateStr(d) === selectedDateStr);
 
-    finalizePeriodsIfNeeded();
+    CHILDREN.forEach(child => syncWeekStreak(child));
     renderAll();
   }
 
