@@ -347,6 +347,10 @@
     padding: 20px;
   }
   .modal-overlay.show { display: flex; }
+  /* The parent-code prompt can be triggered while another modal (e.g.
+     settings) is already open — as its own nested confirmation step. It must
+     always paint above whatever it was opened from, regardless of DOM order. */
+  #codeOverlay { z-index: 1001; }
   .modal-box {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -367,6 +371,7 @@
   .modal-btn { border: none; border-radius: 10px; padding: 9px 18px; font-size: 14px; font-weight: 600; cursor: pointer; }
   .modal-btn.cancel { background: var(--surface-2); color: var(--ink); }
   .modal-btn.confirm { background: #40c057; color: white; }
+  .modal-btn.danger { background: #fa5252; color: white; }
 
   .task-admin-btn {
     display: block;
@@ -390,6 +395,56 @@
 
   .rules-summary { font-size: 13px; line-height: 1.7; color: var(--ink); }
   .rules-summary b { color: #ffc078; }
+
+  .danger-zone {
+    margin-top: 18px;
+    padding: 14px;
+    border: 1.5px dashed #fa5252;
+    border-radius: 14px;
+    background: rgba(250,82,82,0.08);
+  }
+  .danger-zone-title { font-weight: 700; color: #ff8787; margin-bottom: 6px; font-size: 13px; }
+  .danger-zone-text { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  .danger-btn {
+    background: rgba(250,82,82,0.18); border: 1.5px solid #fa5252; color: #ff8787;
+    border-radius: 10px; padding: 9px 14px; font-size: 13px; font-weight: 700; cursor: pointer; width: 100%;
+    font-family: inherit;
+  }
+  .danger-btn:hover { background: rgba(250,82,82,0.28); }
+  .reset-warning { font-size: 13px; line-height: 1.6; color: var(--ink); margin-bottom: 4px; }
+  .reset-warning b { color: #ff8787; }
+
+  /* Sparkly "week finished at 100%" celebration + consecutive-weeks streak */
+  .recap-perfect-banner {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 12px;
+    padding: 14px 12px;
+    border-radius: 14px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 13.5px;
+    color: #3a2a00;
+    background: linear-gradient(120deg, #fff3b0, #ffd43b, #fab005, #ffd43b, #fff3b0);
+    background-size: 300% 100%;
+    animation: perfectShimmer 3s linear infinite, perfectPopIn .5s ease;
+    box-shadow: 0 0 0 2px rgba(255,212,59,0.5), 0 4px 18px rgba(250,176,5,0.45);
+  }
+  .recap-perfect-banner .streak-count {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    margin-top: 4px;
+    color: #5c4400;
+  }
+  @keyframes perfectShimmer { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+  @keyframes perfectPopIn { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .recap-streak-line {
+    font-size: 12px;
+    color: #ffc078;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
 
   .select-toggle-row { text-align: center; margin-bottom: 20px; }
   .select-toggle-btn {
@@ -483,12 +538,14 @@
     <div class="recap-details">
       <div class="recap-col">
         <div class="recap-col-title faustine">👧 Faustine</div>
+        <div id="recapPerfectFaustine"></div>
         <div class="recap-miss-list" id="recapMissesFaustine"></div>
         <div class="recap-bonus" id="recapBonusFaustine"></div>
         <div class="streak-box" id="streakFaustine"></div>
       </div>
       <div class="recap-col">
         <div class="recap-col-title victoria">👧 Victoria</div>
+        <div id="recapPerfectVictoria"></div>
         <div class="recap-miss-list" id="recapMissesVictoria"></div>
         <div class="recap-bonus" id="recapBonusVictoria"></div>
         <div class="streak-box" id="streakVictoria"></div>
@@ -536,8 +593,25 @@
       <br><br>
       La proposition (prendre / reporter) se fait dans l'onglet "Récap semaine", dans la case "Fin de semaine" de chaque enfant.
     </div>
+    <div class="danger-zone">
+      <div class="danger-zone-title">⚠️ Zone sensible</div>
+      <div class="danger-zone-text">Supprime définitivement tout l'historique des tâches, les récaps et les séries de récompenses de Faustine et Victoria. Aucune sauvegarde n'est gardée.</div>
+      <button type="button" class="danger-btn" id="resetDataBtn">🗑️ Réinitialiser toutes les données</button>
+    </div>
     <div class="modal-actions">
       <button class="modal-btn cancel" id="settingsCancel">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset confirmation modal -->
+<div class="modal-overlay" id="resetConfirmOverlay">
+  <div class="modal-box">
+    <div class="modal-title">⚠️ Tout réinitialiser ?</div>
+    <div class="reset-warning">Cette action supprime <b>définitivement</b> tout l'historique des tâches, le récap, et les séries de récompenses de Faustine et Victoria. C'est <b>impossible à annuler</b>.</div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="resetConfirmCancel">Annuler</button>
+      <button class="modal-btn danger" id="resetConfirmConfirm">Oui, tout supprimer</button>
     </div>
   </div>
 </div>
@@ -658,9 +732,19 @@
     return { streakWeeks: [], weekKey: null, decided: false, lastDecision: null };
   }
 
+  // Separate from the reward streak above: a simple count of CONSECUTIVE
+  // fully-elapsed weeks that ended at 100% (all applicable tasks done, every
+  // day). Unlike the reward streak, this never resets on "prendre" — only a
+  // non-perfect week resets it. `count` only holds CONFIRMED past weeks; the
+  // live display adds +1 on top when the current week already qualifies
+  // (see renderRecapPerfect).
+  function defaultPerfectStreak() {
+    return { count: 0, weekKey: null };
+  }
+
   function defaultRewards() {
     const children = {};
-    CHILDREN.forEach(c => children[c] = { streak: defaultChildStreak() });
+    CHILDREN.forEach(c => children[c] = { streak: defaultChildStreak(), perfectStreak: defaultPerfectStreak() });
     return { children };
   }
 
@@ -673,7 +757,10 @@
           if (!parsed.children) parsed.children = {};
           CHILDREN.forEach(c => {
             if (!parsed.children[c] || !parsed.children[c].streak || !Array.isArray(parsed.children[c].streak.streakWeeks)) {
-              parsed.children[c] = { streak: defaultChildStreak() };
+              parsed.children[c] = { streak: defaultChildStreak(), perfectStreak: defaultPerfectStreak() };
+            }
+            if (!parsed.children[c].perfectStreak) {
+              parsed.children[c].perfectStreak = defaultPerfectStreak();
             }
           });
           return parsed;
@@ -885,6 +972,8 @@
       container.appendChild(row);
     });
     CHILDREN.forEach(child => {
+      syncPerfectStreak(child);
+      renderRecapPerfect(child);
       renderRecapMisses(child);
       renderRecapBonus(child);
       syncWeekStreak(child);
@@ -932,7 +1021,79 @@
     return { done: counters.done, total: counters.total, pct: counters.total ? (counters.done / counters.total * 100) : 0 };
   }
 
+  // Full week tally — unlike computeWeekStats, this does NOT stop at today:
+  // every one of the 7 days counts toward `total` even if it hasn't happened
+  // yet (an unlived day has no record, so it contributes 0 done out of its
+  // full applicable total). That's deliberate: it means "100%" can only ever
+  // be true once every single day of the week has actually been completed,
+  // never prematurely mid-week.
+  function computeFullWeekStats(child, wKey) {
+    const [isoYearStr, wStr] = wKey.split('-W');
+    const isoYear = parseInt(isoYearStr, 10);
+    const week = parseInt(wStr, 10);
+    const monday = mondayOfIsoWeek(isoYear, week);
+    const counters = { done: 0, total: 0 };
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      const dateStr = toDateStr(d);
+      const rec = (db[wKey] && db[wKey][child] && db[wKey][child][dateStr]) || {};
+      const applicable = tasksForDay(i, isCantineOff(rec));
+      const tally = tallyDayForChild(rec, applicable);
+      counters.done += tally.done;
+      counters.total += tally.total;
+    }
+    return { done: counters.done, total: counters.total, pct: counters.total ? (counters.done / counters.total * 100) : 0 };
+  }
+
+  function isWeekPerfect(stats) {
+    return stats.total > 0 && stats.done === stats.total;
+  }
+
   function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  // --- Consecutive 100% weeks ---
+  // Brings a child's perfect-week counter up to date with the current
+  // `weekKey`: when a new week is detected, the JUST-ENDED week (now fully
+  // in the past, so computeFullWeekStats reflects its true final result) is
+  // checked — a perfect week increments the streak, anything else resets it
+  // to 0. This only ever touches CONFIRMED, fully-elapsed weeks; the live
+  // "is this week already perfect" check is done separately for display.
+  function syncPerfectStreak(child) {
+    const ps = rewards.children[child].perfectStreak;
+    if (ps.weekKey === weekKey) return;
+    if (ps.weekKey) {
+      const stats = computeFullWeekStats(child, ps.weekKey);
+      ps.count = isWeekPerfect(stats) ? ps.count + 1 : 0;
+    }
+    ps.weekKey = weekKey;
+    saveRewards();
+  }
+
+  // Sparkly celebration + streak count in the recap. Shows the big banner
+  // only while the CURRENT week is already fully perfect; otherwise, if
+  // there's a confirmed streak from earlier weeks, shows a quieter line so
+  // the count stays visible even mid-week.
+  function renderRecapPerfect(child) {
+    const container = document.getElementById('recapPerfect' + capitalize(child));
+    if (!container) return;
+    const ps = rewards.children[child].perfectStreak;
+    const currentStats = computeFullWeekStats(child, weekKey);
+    const currentPerfect = isWeekPerfect(currentStats);
+    const displayCount = ps.count + (currentPerfect ? 1 : 0);
+
+    if (currentPerfect) {
+      container.innerHTML = `
+        <div class="recap-perfect-banner">
+          ✨🎉 Semaine 100% complète ! 🎉✨
+          <span class="streak-count">🔥 ${displayCount} semaine${displayCount > 1 ? 's' : ''} à 100% d'affilée</span>
+        </div>
+      `;
+    } else if (displayCount > 0) {
+      container.innerHTML = `<div class="recap-streak-line">🔥 ${displayCount} semaine${displayCount > 1 ? 's' : ''} à 100% d'affilée jusqu'ici</div>`;
+    } else {
+      container.innerHTML = '';
+    }
+  }
 
   // --- Rewards: take-or-report weekly streak ---
   // Fixed formula, not user-editable (the rule is spelled out as plain text
@@ -1452,6 +1613,26 @@
   }
   document.getElementById('settingsBtn').addEventListener('click', () => askForCode(openSettings));
   document.getElementById('settingsCancel').addEventListener('click', closeSettings);
+
+  // --- Reset all data: double-gated (code, then an explicit confirm modal)
+  // since it's the one truly irreversible action in the app. ---
+  function openResetConfirm() {
+    document.getElementById('resetConfirmOverlay').classList.add('show');
+  }
+  function closeResetConfirm() {
+    document.getElementById('resetConfirmOverlay').classList.remove('show');
+  }
+  function confirmReset() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(REWARDS_KEY);
+    } catch (e) { /* ignore */ }
+    location.reload();
+  }
+  document.getElementById('resetDataBtn').addEventListener('click', () => askForCode(openResetConfirm));
+  document.getElementById('resetConfirmCancel').addEventListener('click', closeResetConfirm);
+  document.getElementById('resetConfirmConfirm').addEventListener('click', confirmReset);
+
   document.getElementById('tabToday').addEventListener('click', () => switchTab('today'));
   document.getElementById('tabRecap').addEventListener('click', () => switchTab('recap'));
 
@@ -1469,7 +1650,7 @@
     selectedDateStr = toDateStr(today);
     selectedDayIdx = weekDates.findIndex(d => toDateStr(d) === selectedDateStr);
 
-    CHILDREN.forEach(child => syncWeekStreak(child));
+    CHILDREN.forEach(child => { syncWeekStreak(child); syncPerfectStreak(child); });
     renderAll();
   }
 
