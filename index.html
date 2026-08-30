@@ -283,6 +283,8 @@
   }
   .recap-bonus-line.ok { background: rgba(64,192,87,0.14); color: #69db7c; }
   .recap-bonus-line.warn { background: rgba(255,192,120,0.14); color: #ffc078; }
+  .recap-bonus-line.total { background: rgba(250,176,5,0.16); color: #ffc078; }
+  .recap-bonus-line.total b { color: #fff; }
 
   /* "Fin de semaine" streak proposal box (Récap semaine tab) */
   .streak-box {
@@ -819,6 +821,21 @@
     });
   }
 
+  // Simple total: how many times a bonus chore (lave-vaisselle, aspirateur)
+  // was checked done this week, for this child — days up to today only.
+  function countWeekBonusDone(child) {
+    const today = toDateStr(new Date());
+    const bonusTasks = TASKS.filter(t => t.adultOnly);
+    let count = 0;
+    weekDates.forEach(d => {
+      const dateStr = toDateStr(d);
+      if (dateStr > today) return;
+      const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
+      bonusTasks.forEach(t => { if (rec[t.id] === true) count += 1; });
+    });
+    return count;
+  }
+
   function renderRecapMisses(child) {
     const container = document.getElementById('recapMisses' + capitalize(child));
     if (!container) return;
@@ -833,17 +850,21 @@
     ).join('');
   }
 
-  // Bonus tasks stay positive-only in the recap: no "raté" wording, just the
-  // bonus reserve earned this week (nothing shown when there's none to report).
+  // Bonus tasks stay positive-only in the recap: no "raté" wording. Shows the
+  // total number of bonus chores done this week, plus the bonus reserve
+  // earned (nothing shown for the reserve part when there's none to report).
   function renderRecapBonus(child) {
     const container = document.getElementById('recapBonus' + capitalize(child));
     if (!container) return;
+    const totalBonus = countWeekBonusDone(child);
     const bonusInfo = computeWeekBonusTasks(child);
-    container.innerHTML = bonusInfo
+    let html = `<div class="recap-bonus-line total">⭐ Bonus cette semaine : <b>${totalBonus}</b></div>`;
+    html += bonusInfo
       .filter(({ unusedBonus }) => unusedBonus > 0)
       .map(({ task, unusedBonus }) =>
         `<div class="recap-bonus-line ok">${task.emoji} ${task.label} : ${unusedBonus} bonus en réserve 🎁</div>`
       ).join('');
+    container.innerHTML = html;
   }
 
   function renderRecap() {
