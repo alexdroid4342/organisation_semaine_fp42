@@ -35,7 +35,7 @@
     color: var(--ink);
   }
   body { padding: 20px 16px 50px; min-height: 100vh; }
-  .wrap { max-width: 920px; margin: 0 auto; }
+  .wrap { max-width: 1012px; margin: 0 auto; }
 
   .banner {
     display: none;
@@ -78,20 +78,20 @@
     display: flex;
     flex-direction: column;
     gap: 7px;
-    flex: 0 0 90px;
+    flex: 0 0 138px;
   }
   .day-btn {
     background: var(--surface);
     border: 2.5px solid var(--border);
     border-radius: 14px;
-    padding: 8px 4px;
+    padding: 9px 8px;
     text-align: center;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 600;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 6px;
   }
   .day-btn .dnum { display:inline-block; font-size: 14px; font-weight: 700; margin-top: 0; }
@@ -716,6 +716,7 @@
   const REWARDS_KEY = "famille_rewards_v3";
   const DAY_LABELS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
   const FULL_DAY_LABELS = ["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
+  const DAY_LABELS_FULL = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
 
   let storageAvailable = true;
   let db = {};
@@ -1319,7 +1320,7 @@
       let dotClass = 'dot';
       if (total > 0 && done === total) dotClass += ' full';
       else if (done > 0) dotClass += ' partial';
-      btn.innerHTML = `${DAY_LABELS[i]}<span class="dnum">${d.getDate()}</span><span class="${dotClass}"></span>`;
+      btn.innerHTML = `${DAY_LABELS_FULL[i]}<span class="dnum">${d.getDate()}</span><span class="${dotClass}"></span>`;
       btn.addEventListener('click', () => {
         selectedDateStr = dateStr; selectedDayIdx = i;
         // Switching day: drop any in-progress multi-selection so it can't be
