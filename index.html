@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="Routine semaine">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Varela+Round&family=Bubblegum+Sans&display=swap" rel="stylesheet">
 <style>
   :root {
     --faustine: #ff5ca8;
@@ -30,7 +30,7 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
     margin: 0;
-    font-family: -apple-system, 'Segoe UI', 'DejaVu Sans', Arial, sans-serif;
+    font-family: 'Varela Round', -apple-system, 'Segoe UI', 'DejaVu Sans', Arial, sans-serif;
     background: linear-gradient(160deg, #5f6368, #34373c 60%);
     color: var(--ink);
   }
@@ -90,13 +90,13 @@
     border: 2.5px solid var(--border);
     border-radius: 14px;
     padding: 9px 10px;
-    text-align: left;
+    text-align: right;
     cursor: pointer;
     font-size: 13.5px;
     font-weight: 600;
     display: flex;
     align-items: baseline;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 6px;
   }
   .day-btn .day-label { display: inline-flex; align-items: baseline; gap: 4px; }
@@ -158,13 +158,15 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 19px;
-    font-weight: 700;
+    font-family: 'Bubblegum Sans', cursive;
+    font-size: 22px;
+    font-weight: 400;
     color: white;
     padding: 8px 16px;
     border-radius: 14px;
     margin-bottom: 14px;
   }
+  .child-title .bonus-badge { font-family: 'Varela Round', sans-serif; }
   .child-title.faustine { background: var(--faustine); }
   .child-title.victoria {
     background-color: var(--victoria);
@@ -364,10 +366,12 @@
     line-height: 1.5;
   }
 
-  .settings-toggle-row { text-align: center; margin-top: 18px; }
+  .settings-toggle-row { margin-top: 10px; }
   .settings-toggle-row button {
+    width: 100%;
     background: var(--surface); border: 2px solid var(--border); border-radius: 12px;
-    padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted);
+    padding: 8px; font-size: 18px; font-weight: 600; cursor: pointer; color: var(--muted);
+    font-family: inherit; line-height: 1;
   }
 
   .modal-overlay {
@@ -478,24 +482,26 @@
     margin-bottom: 10px;
   }
 
-  .select-toggle-row { text-align: center; margin-bottom: 20px; }
-  .select-toggle-btn {
-    display: inline-block; background: var(--surface-2); border: 1.5px solid var(--border);
-    color: var(--muted); border-radius: 10px; padding: 8px 14px; font-size: 12.5px; font-weight: 600;
-    font-family: inherit; cursor: pointer;
+  .select-toggle-row { margin-top: 10px; }
+  #selectToggleBtn {
+    width: 100%;
+    background: var(--surface); border: 2.5px solid var(--border);
+    color: var(--ink); border-radius: 14px; padding: 11px 8px; font-size: 12.5px; font-weight: 700;
+    font-family: inherit; cursor: pointer; text-align: center;
   }
-  .select-toggle-btn.active { border-color: #f76707; color: var(--ink); }
+  #selectToggleBtn.active { border-color: #f76707; background: rgba(247,103,7,0.12); }
   .task-btn.selectable { cursor: pointer; }
   .task-btn.select-checked { outline: 3px solid #f76707; outline-offset: 2px; }
   .task-btn.select-disabled { opacity: 0.4; cursor: not-allowed; }
   .select-bar {
-    display: none; align-items: center; justify-content: space-between; gap: 10px;
-    background: var(--surface); border-radius: 12px; padding: 10px 14px; margin-top: 10px; font-size: 12.5px;
-    color: var(--muted); box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+    display: none; flex-direction: column; align-items: stretch; gap: 8px;
+    background: var(--surface); border-radius: 12px; padding: 10px; margin-top: 8px; font-size: 12px;
+    color: var(--muted); box-shadow: 0 2px 10px rgba(0,0,0,0.18); text-align: center;
   }
   .select-bar.show { display: flex; }
   .select-bar button {
-    border: none; border-radius: 8px; padding: 7px 14px; font-size: 12.5px; font-weight: 700;
+    width: 100%;
+    border: none; border-radius: 8px; padding: 9px 8px; font-size: 12px; font-weight: 700;
     font-family: inherit; cursor: pointer; background: #40c057; color: white;
   }
   .select-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -548,7 +554,18 @@
 
     <div class="days-col">
       <div class="days-nav" id="daysNav"></div>
-      <button type="button" class="recap-nav-btn" id="tabRecap">📊 Récap semaine</button>
+      <button type="button" class="recap-nav-btn" id="tabRecap">📊 Semaine</button>
+
+      <div class="select-toggle-row">
+        <button type="button" id="selectToggleBtn">☑️ Sélection multiple</button>
+        <div class="select-bar" id="selectBar">
+          <span id="selectCount">0 sélectionnée</span>
+          <button type="button" id="selectConfirmBtn">🔒 Annuler / Désactiver</button>
+        </div>
+      </div>
+
+      <div class="settings-toggle-row"><button id="settingsBtn" aria-label="Réglages parent (code requis)">⚙️</button></div>
+      <div class="settings-toggle-row"><button id="infoBtn" aria-label="Comment ça marche">ℹ️</button></div>
     </div>
 
     <div class="content-col">
@@ -569,22 +586,14 @@
           </div>
         </div>
 
-        <div class="select-toggle-row">
-          <button type="button" id="selectToggleBtn">☑️ Sélection multiple (Faustine + Victoria)</button>
-          <div class="select-bar" id="selectBar">
-            <span id="selectCount">0 sélectionnée</span>
-            <button type="button" id="selectConfirmBtn">🔒 Annuler / Désactiver</button>
-          </div>
-        </div>
-
         <div class="child-section faustine">
-          <div class="child-title faustine">👧 Faustine<span class="bonus-badge" id="bonusBadgeFaustine"></span></div>
+          <div class="child-title faustine">🦄 Faustine 💫<span class="bonus-badge" id="bonusBadgeFaustine"></span></div>
           <div class="cantine-row" id="cantineFaustine"></div>
           <div class="tasks" id="tasksFaustine"></div>
         </div>
 
         <div class="child-section victoria">
-          <div class="child-title victoria">👧 Victoria ✨<span class="bonus-badge" id="bonusBadgeVictoria"></span></div>
+          <div class="child-title victoria">🦋 Victoria ✨<span class="bonus-badge" id="bonusBadgeVictoria"></span></div>
           <div class="cantine-row" id="cantineVictoria"></div>
           <div class="tasks" id="tasksVictoria"></div>
         </div>
@@ -605,14 +614,14 @@
 
         <div class="recap-details">
           <div class="recap-col">
-            <div class="recap-col-title faustine">👧 Faustine</div>
+            <div class="recap-col-title faustine">🦄 Faustine 💫</div>
             <div id="recapPerfectFaustine"></div>
             <div class="recap-miss-list" id="recapMissesFaustine"></div>
             <div class="recap-bonus" id="recapBonusFaustine"></div>
             <div class="streak-box" id="streakFaustine"></div>
           </div>
           <div class="recap-col">
-            <div class="recap-col-title victoria">👧 Victoria</div>
+            <div class="recap-col-title victoria">🦋 Victoria ✨</div>
             <div id="recapPerfectVictoria"></div>
             <div class="recap-miss-list" id="recapMissesVictoria"></div>
             <div class="recap-bonus" id="recapBonusVictoria"></div>
@@ -625,9 +634,6 @@
 
   </div>
 
-  <div class="note">Les coches sont enregistrées sur cette tablette pour toute la semaine (Lun → Dim). Une nouvelle semaine démarre automatiquement le lundi. Sur les jours d'école, la tâche "Déjeuner" n'apparaît que si la cantine est désactivée pour l'enfant ce jour-là (bouton en haut de sa liste). "Ranger sa chambre" n'apparaît que le mercredi et le dimanche. Toucher une tâche déjà cochée (ou déjà marquée "non applicable") demande le code parent, avec le choix d'annuler ou de la marquer "non à faire ce jour" (ex : absente ce jour-là) — elle est alors retirée du calcul du pourcentage. Le bouton "Sélection multiple" permet de choisir plusieurs tâches déjà cochées (ou non applicables), chez Faustine et/ou Victoria en même temps, pour les annuler ou les désactiver toutes en une seule fois, avec un seul code parent. Les corvées bonus (lave-vaisselle, aspirateur, contour doré) ne peuvent être cochées "faites" que par un adulte (code requis) : chaque jour où l'une des deux est faite, ça génère un bonus qui peut compenser un raté sur l'autre cette même semaine (les bonus ne se reportent pas à la semaine suivante) — le détail est dans l'onglet "Récap semaine".</div>
-
-  <div class="settings-toggle-row"><button id="settingsBtn">⚙️ Réglages parent (code requis)</button></div>
 
 </div>
 
@@ -663,7 +669,7 @@
       <br>
       Si la moyenne passe sous 60% à une étape, rien n'est perdu ni remis à zéro : on avise au cas par cas, et la moyenne continue de se construire la semaine suivante.
       <br><br>
-      La proposition (prendre / reporter) se fait dans l'onglet "Récap semaine", dans la case "Fin de semaine" de chaque enfant.
+      La proposition (prendre / reporter) se fait dans l'onglet "Semaine", dans la case "Fin de semaine" de chaque enfant.
     </div>
     <div class="danger-zone">
       <div class="danger-zone-title">⚠️ Zone sensible</div>
@@ -684,6 +690,18 @@
     <div class="modal-actions">
       <button class="modal-btn cancel" id="resetConfirmCancel">Annuler</button>
       <button class="modal-btn danger" id="resetConfirmConfirm">Oui, tout supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Info modal (how the app works — was a permanent footer paragraph, now
+     tucked behind an "ℹ️" button so it doesn't eat vertical space). -->
+<div class="modal-overlay" id="infoOverlay">
+  <div class="modal-box wide">
+    <div class="modal-title">ℹ️ Comment ça marche</div>
+    <div class="rules-summary">Les coches sont enregistrées sur cette tablette pour toute la semaine (Lun → Dim). Une nouvelle semaine démarre automatiquement le lundi. Sur les jours d'école, la tâche "Déjeuner" n'apparaît que si la cantine est désactivée pour l'enfant ce jour-là (bouton en haut de sa liste). "Ranger sa chambre" n'apparaît que le mercredi et le dimanche. Toucher une tâche déjà cochée (ou déjà marquée "non applicable") demande le code parent, avec le choix d'annuler ou de la marquer "non à faire ce jour" (ex : absente ce jour-là) — elle est alors retirée du calcul du pourcentage. Le bouton "Sélection multiple" permet de choisir plusieurs tâches déjà cochées (ou non applicables), chez Faustine et/ou Victoria en même temps, pour les annuler ou les désactiver toutes en une seule fois, avec un seul code parent. Les corvées bonus (lave-vaisselle, aspirateur, contour doré) ne peuvent être cochées "faites" que par un adulte (code requis) : chaque jour où l'une des deux est faite, ça génère un bonus qui peut compenser un raté sur l'autre cette même semaine (les bonus ne se reportent pas à la semaine suivante) — le détail est dans l'onglet "Semaine".</div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="infoClose">Fermer</button>
     </div>
   </div>
 </div>
@@ -1386,7 +1404,7 @@
 
     const toggleBtn = document.getElementById('selectToggleBtn');
     if (toggleBtn) {
-      toggleBtn.textContent = selectMode ? '✖️ Annuler la sélection' : '☑️ Sélection multiple (Faustine + Victoria)';
+      toggleBtn.textContent = selectMode ? '✖️ Annuler la sélection' : '☑️ Sélection multiple';
       toggleBtn.classList.toggle('active', selectMode);
     }
     const bar = document.getElementById('selectBar');
@@ -1697,6 +1715,12 @@
   }
   document.getElementById('settingsBtn').addEventListener('click', () => askForCode(openSettings));
   document.getElementById('settingsCancel').addEventListener('click', closeSettings);
+  document.getElementById('infoBtn').addEventListener('click', () => {
+    document.getElementById('infoOverlay').classList.add('show');
+  });
+  document.getElementById('infoClose').addEventListener('click', () => {
+    document.getElementById('infoOverlay').classList.remove('show');
+  });
 
   // --- Reset all data: double-gated (code, then an explicit confirm modal)
   // since it's the one truly irreversible action in the app. ---
