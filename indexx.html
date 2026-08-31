@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Notre routine de la semaine</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f76707">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Routine semaine">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --faustine: #ff5ca8;
+    --faustine-bg: rgba(255, 92, 168, 0.16);
+    --victoria: #06b6d4;
+    --victoria-bg: rgba(6, 182, 212, 0.16);
+    --ink: #e8e9eb;
+    --muted: #9a9ea5;
+    --surface: #3a3d43;
+    --surface-2: #32353b;
+    --border: #52565d;
+    --card-radius: 20px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0;
+    font-family: -apple-system, 'Segoe UI', 'DejaVu Sans', Arial, sans-serif;
+    background: linear-gradient(160deg, #5f6368, #34373c 60%);
+    color: var(--ink);
+  }
+  body { padding: 20px 16px 50px; min-height: 100vh; }
+  .wrap { max-width: 1012px; margin: 0 auto; }
+
+  .banner {
+    display: none;
+    background: #ffe3e3;
+    color: #a61e1e;
+    border-radius: 14px;
+    padding: 10px 16px;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  .banner.show { display: block; }
+
+  .header {
+    background: linear-gradient(135deg, #4a4e55, #2f3237);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 20px 26px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .header h1 { margin: 0; font-size: 26px; }
+  .today-banner {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: 26px;
+    color: #ffc078;
+    margin-top: 2px;
+  }
+
+  .app-body {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .content-col {
+    flex: 1;
+    min-width: 0;
+  }
+  .days-col {
+    flex: 0 0 138px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .days-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .day-btn {
+    background: var(--surface);
+    border: 2.5px solid var(--border);
+    border-radius: 14px;
+    padding: 9px 10px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .day-btn .day-label { display: inline-flex; align-items: baseline; gap: 4px; }
+  .day-btn .dnum { display:inline-block; font-size: 14px; font-weight: 700; }
+  .day-btn .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #6b6f76;
+    flex: 0 0 auto;
+  }
+  .day-btn.today { border-color: #ffa94d; }
+  .day-btn.selected { background: rgba(247,103,7,0.18); border-color: #f76707; }
+  .day-btn .dot.partial { background: #ffc078; }
+  .day-btn .dot.full { background: #40c057; }
+
+  .recap-nav-btn {
+    margin-top: 10px;
+    background: var(--surface);
+    border: 2.5px solid var(--border);
+    border-radius: 14px;
+    padding: 11px 8px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    color: var(--ink);
+  }
+  .recap-nav-btn.active { border-color: #f76707; color: var(--ink); background: rgba(247,103,7,0.12); }
+
+  .progress-wrap {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+  }
+  .progress-title { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .progress-row { display: flex; align-items: center; gap: 10px; }
+  .progress-row + .progress-row { margin-top: 10px; }
+  .progress-name { flex: 0 0 68px; font-size: 13px; font-weight: 700; }
+  .progress-name.faustine { color: var(--faustine); }
+  .progress-name.victoria { color: var(--victoria); }
+  .progress-bar { flex: 1; height: 12px; background: var(--surface-2); border-radius: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg,#63e6be,#38d9a9); transition: width .4s ease; }
+  .progress-fill.faustine { background: linear-gradient(90deg, var(--faustine), #ff8fc4); }
+  .progress-fill.victoria { background: linear-gradient(90deg, var(--victoria), #22d3ee); }
+  .progress-count { flex: 0 0 46px; text-align: right; font-size: 12.5px; color: var(--muted); }
+
+  .child-section {
+    background: var(--surface);
+    border-radius: var(--card-radius);
+    padding: 16px 18px 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+  }
+  .child-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 19px;
+    font-weight: 700;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 14px;
+    margin-bottom: 14px;
+  }
+  .child-title.faustine { background: var(--faustine); }
+  .child-title.victoria {
+    background-color: var(--victoria);
+    background-image:
+      radial-gradient(circle at 10% 30%, rgba(255,255,255,0.95) 1.4px, transparent 2px),
+      radial-gradient(circle at 28% 70%, rgba(255,255,255,0.7) 1px, transparent 1.5px),
+      radial-gradient(circle at 46% 20%, rgba(255,255,255,0.9) 1.4px, transparent 2px),
+      radial-gradient(circle at 63% 65%, rgba(255,255,255,0.6) 1px, transparent 1.5px),
+      radial-gradient(circle at 79% 25%, rgba(255,255,255,0.85) 1.2px, transparent 2px),
+      radial-gradient(circle at 93% 70%, rgba(255,255,255,0.65) 1px, transparent 1.5px);
+    background-size: 100% 100%;
+    animation: sparkle 6s linear infinite;
+  }
+  @keyframes sparkle {
+    0%, 100% { background-position: 0 0; }
+    50% { background-position: 4px -3px; }
+  }
+
+  .bonus-badge {
+    display: none;
+    margin-left: auto;
+    font-size: 12.5px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.28);
+    padding: 4px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .bonus-badge.show { display: inline-block; }
+
+  .cantine-row:not(:empty) { margin-bottom: 12px; }
+  .cantine-toggle {
+    display: block; width: 100%; text-align: left;
+    border: 2px solid var(--border); background: var(--surface-2); color: var(--ink);
+    border-radius: 12px; padding: 9px 12px; font-size: 13px; font-weight: 600;
+    font-family: inherit; cursor: pointer;
+  }
+  .cantine-toggle.on { border-color: #40c057; }
+  .cantine-toggle.off { border-color: #f76707; background: rgba(247,103,7,0.12); }
+  .cantine-hint { display: block; font-weight: 400; color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+  .recap-panel {
+    background: var(--surface);
+    border-radius: var(--card-radius);
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+  }
+  .recap-table { display: flex; flex-direction: column; gap: 6px; }
+  .recap-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 6px;
+    border-radius: 10px;
+  }
+  .recap-row.recap-head {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    padding-bottom: 8px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid var(--border);
+  }
+  .recap-row:not(.recap-head):nth-child(even) { background: var(--surface-2); }
+  .recap-day { font-size: 13px; font-weight: 600; }
+  .recap-day .recap-date { color: var(--muted); font-weight: 400; margin-left: 4px; }
+  .recap-pct { text-align: center; font-size: 15px; font-weight: 700; border-radius: 8px; padding: 6px 0; }
+  .recap-pct.faustine-head { color: var(--faustine); text-align: center; }
+  .recap-pct.victoria-head { color: var(--victoria); text-align: center; }
+  .recap-pct.empty { color: var(--muted); font-weight: 400; background: transparent; }
+  .recap-pct.full { background: rgba(64,192,87,0.16); color: #69db7c; }
+  .recap-pct.partial { background: rgba(255,192,120,0.14); color: #ffc078; }
+  .recap-pct.zero { background: transparent; color: var(--muted); }
+
+  .tasks {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+  .task-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    border: 2.5px solid var(--border);
+    background: var(--surface-2);
+    border-radius: 12px;
+    padding: 8px 3px 6px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 10.5px;
+    line-height: 1.2;
+    user-select: none;
+    transition: transform .15s ease, background .2s ease, border-color .2s ease;
+    min-height: 60px;
+  }
+  .task-btn .emoji { font-size: 18px; display: block; margin-bottom: 3px; }
+  .task-btn:active { transform: scale(0.95); }
+  .faustine .task-btn.done { background: var(--faustine-bg); border-color: var(--faustine); }
+  .victoria .task-btn.done { background: var(--victoria-bg); border-color: var(--victoria); }
+  .task-btn.done .emoji::after { content: " \2705"; }
+  .task-btn.bounce { animation: bounce .4s ease; }
+  @keyframes bounce {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  .task-btn.na {
+    background: repeating-linear-gradient(135deg, #35383e, #35383e 6px, #2c2f34 6px, #2c2f34 12px);
+    border-color: var(--border);
+    color: var(--muted);
+  }
+  .task-btn.na .emoji::after { content: " \1F6AB"; }
+  .na-tag {
+    display: block;
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+  /* Bonus chores (lave-vaisselle, aspirateur) — adult-validated, flagged with
+     a gold outline and slight transparency so they stand out. */
+  .task-btn.bonus-task { box-shadow: 0 0 0 3px rgba(250,176,5,0.55); opacity: 0.82; }
+
+  .recap-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .recap-col-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .recap-col-title.faustine { color: var(--faustine); }
+  .recap-col-title.victoria { color: var(--victoria); }
+  .recap-miss-line { font-size: 12.5px; color: var(--muted); margin-bottom: 4px; }
+  .recap-miss-line b { color: var(--ink); }
+  .recap-empty { font-size: 12.5px; color: var(--muted); font-style: italic; }
+  .recap-bonus { margin-top: 10px; }
+  .recap-bonus-line {
+    font-size: 12.5px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .recap-bonus-line.ok { background: rgba(64,192,87,0.14); color: #69db7c; }
+  .recap-bonus-line.warn { background: rgba(255,192,120,0.14); color: #ffc078; }
+  .recap-bonus-line.total { background: rgba(250,176,5,0.16); color: #ffc078; }
+  .recap-bonus-line.total b { color: #fff; }
+
+  /* "Fin de semaine" streak proposal box (Récap semaine tab) */
+  .streak-box {
+    margin-top: 12px;
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+  }
+  .streak-title { font-weight: 700; margin-bottom: 6px; font-size: 13px; }
+  .streak-pct { margin-bottom: 8px; color: var(--muted); }
+  .streak-pct b { color: var(--ink); }
+  .streak-msg { color: var(--muted); font-style: italic; }
+  .streak-msg.locked { color: var(--muted); }
+  .streak-decided { font-weight: 600; }
+  .streak-decided.pris { color: #69db7c; }
+  .streak-decided.reporte { color: #ffc078; }
+  .streak-actions { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .streak-btn {
+    border: none; border-radius: 10px; padding: 8px 14px; font-size: 12.5px; font-weight: 700;
+    font-family: inherit; cursor: pointer;
+  }
+  .streak-btn.take { background: #fab005; color: #2d2a26; }
+  .streak-btn.report { background: var(--surface); border: 1.5px solid var(--border); color: var(--ink); }
+
+  .celebration {
+    display: none;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid #fab005;
+    border-radius: var(--card-radius);
+    padding: 18px;
+    font-size: 17px;
+    font-weight: 600;
+  }
+  .celebration.show { display: block; animation: pop .5s ease; }
+  @keyframes pop { 0% { transform: scale(0.85); opacity:0; } 100% { transform: scale(1); opacity:1; } }
+
+  .note {
+    font-size: 12px;
+    color: #c7cad0;
+    text-align: center;
+    margin-top: 18px;
+    line-height: 1.5;
+  }
+
+  .settings-toggle-row { text-align: center; margin-top: 18px; }
+  .settings-toggle-row button {
+    background: var(--surface); border: 2px solid var(--border); border-radius: 12px;
+    padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted);
+  }
+
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    align-items: center; justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  /* The parent-code prompt can be triggered while another modal (e.g.
+     settings) is already open — as its own nested confirmation step. It must
+     always paint above whatever it was opened from, regardless of DOM order. */
+  #codeOverlay { z-index: 1001; }
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 22px 24px;
+    max-width: 360px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+  }
+  .modal-box.wide { max-width: 640px; max-height: 85vh; overflow-y: auto; }
+  .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 14px; }
+  .modal-box input[type="password"], .modal-box input[type="number"] {
+    width: 100%; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--border);
+    background: var(--surface-2); color: var(--ink); font-size: 16px; margin-bottom: 6px;
+  }
+  .modal-error { color: #ff6b6b; font-size: 12.5px; display: none; margin-bottom: 6px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 14px; justify-content: flex-end; }
+  .modal-btn { border: none; border-radius: 10px; padding: 9px 18px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .modal-btn.cancel { background: var(--surface-2); color: var(--ink); }
+  .modal-btn.confirm { background: #40c057; color: white; }
+  .modal-btn.danger { background: #fa5252; color: white; }
+
+  .task-admin-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 2px solid var(--border);
+    background: var(--surface-2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .task-admin-btn:last-child { margin-bottom: 0; }
+  .task-admin-btn .sub { display: block; font-weight: 400; font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+  .task-admin-btn.warn { border-color: #fab005; background: rgba(250,176,5,0.14); }
+  .task-admin-btn:active { transform: scale(0.98); }
+
+  .rules-summary { font-size: 13px; line-height: 1.7; color: var(--ink); }
+  .rules-summary b { color: #ffc078; }
+
+  .danger-zone {
+    margin-top: 18px;
+    padding: 14px;
+    border: 1.5px dashed #fa5252;
+    border-radius: 14px;
+    background: rgba(250,82,82,0.08);
+  }
+  .danger-zone-title { font-weight: 700; color: #ff8787; margin-bottom: 6px; font-size: 13px; }
+  .danger-zone-text { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  .danger-btn {
+    background: rgba(250,82,82,0.18); border: 1.5px solid #fa5252; color: #ff8787;
+    border-radius: 10px; padding: 9px 14px; font-size: 13px; font-weight: 700; cursor: pointer; width: 100%;
+    font-family: inherit;
+  }
+  .danger-btn:hover { background: rgba(250,82,82,0.28); }
+  .reset-warning { font-size: 13px; line-height: 1.6; color: var(--ink); margin-bottom: 4px; }
+  .reset-warning b { color: #ff8787; }
+
+  /* Sparkly "week finished at 100%" celebration + consecutive-weeks streak */
+  .recap-perfect-banner {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 12px;
+    padding: 14px 12px;
+    border-radius: 14px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 13.5px;
+    color: #3a2a00;
+    background: linear-gradient(120deg, #fff3b0, #ffd43b, #fab005, #ffd43b, #fff3b0);
+    background-size: 300% 100%;
+    animation: perfectShimmer 3s linear infinite, perfectPopIn .5s ease;
+    box-shadow: 0 0 0 2px rgba(255,212,59,0.5), 0 4px 18px rgba(250,176,5,0.45);
+  }
+  .recap-perfect-banner .streak-count {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    margin-top: 4px;
+    color: #5c4400;
+  }
+  @keyframes perfectShimmer { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+  @keyframes perfectPopIn { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .recap-streak-line {
+    font-size: 12px;
+    color: #ffc078;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .select-toggle-row { text-align: center; margin-bottom: 20px; }
+  .select-toggle-btn {
+    display: inline-block; background: var(--surface-2); border: 1.5px solid var(--border);
+    color: var(--muted); border-radius: 10px; padding: 8px 14px; font-size: 12.5px; font-weight: 600;
+    font-family: inherit; cursor: pointer;
+  }
+  .select-toggle-btn.active { border-color: #f76707; color: var(--ink); }
+  .task-btn.selectable { cursor: pointer; }
+  .task-btn.select-checked { outline: 3px solid #f76707; outline-offset: 2px; }
+  .task-btn.select-disabled { opacity: 0.4; cursor: not-allowed; }
+  .select-bar {
+    display: none; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--surface); border-radius: 12px; padding: 10px 14px; margin-top: 10px; font-size: 12.5px;
+    color: var(--muted); box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+  }
+  .select-bar.show { display: flex; }
+  .select-bar button {
+    border: none; border-radius: 8px; padding: 7px 14px; font-size: 12.5px; font-weight: 700;
+    font-family: inherit; cursor: pointer; background: #40c057; color: white;
+  }
+  .select-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Landscape-only: hidden by default, shown over everything while the
+     device is held in portrait (see the media query below). */
+  .rotate-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 3000;
+    background: linear-gradient(160deg, #5f6368, #34373c 60%);
+    color: var(--ink);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px;
+  }
+  .rotate-icon { font-size: 64px; margin-bottom: 18px; display: inline-block; animation: rotateHint 1.6s ease-in-out infinite; }
+  .rotate-text { font-size: 16px; font-weight: 600; max-width: 320px; line-height: 1.5; }
+  @keyframes rotateHint { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } }
+  @media (orientation: portrait) {
+    .rotate-overlay { display: flex; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Shown only while the device is held in portrait — the app is designed
+     for landscape use on a tablet. Pure CSS, so it works whether opened as
+     an installed PWA or in a plain browser tab, on any device. (We
+     deliberately do NOT use the manifest.json orientation lock here: on
+     some Android browsers it forces a rotation that conflicts with this
+     media query and gets stuck showing the message even in landscape.) -->
+<div class="rotate-overlay">
+  <span class="rotate-icon">🔄</span>
+  <div class="rotate-text">Tourne la tablette pour utiliser l'appli en mode paysage</div>
+</div>
+
+<div class="wrap">
+
+  <div class="banner" id="storageBanner">⚠️ Le stockage n'est pas disponible sur cet appareil/navigateur (mode privé ?). Les coches ne seront pas conservées après fermeture.</div>
+
+  <div class="header">
+    <h1 id="titleLabel">🏡 Notre routine de la semaine</h1>
+    <div class="today-banner" id="todayBanner"></div>
+  </div>
+
+  <div class="app-body">
+
+    <div class="days-col">
+      <div class="days-nav" id="daysNav"></div>
+      <button type="button" class="recap-nav-btn" id="tabRecap">📊 Récap semaine</button>
+    </div>
+
+    <div class="content-col">
+
+      <div id="viewToday">
+
+        <div class="progress-wrap">
+          <div class="progress-title" id="progressDayLabel">Tâches faites</div>
+          <div class="progress-row">
+            <div class="progress-name faustine">Faustine</div>
+            <div class="progress-bar"><div class="progress-fill faustine" id="progressFillFaustine"></div></div>
+            <div class="progress-count" id="progressTextFaustine">0 / 0</div>
+          </div>
+          <div class="progress-row">
+            <div class="progress-name victoria">Victoria</div>
+            <div class="progress-bar"><div class="progress-fill victoria" id="progressFillVictoria"></div></div>
+            <div class="progress-count" id="progressTextVictoria">0 / 0</div>
+          </div>
+        </div>
+
+        <div class="select-toggle-row">
+          <button type="button" id="selectToggleBtn">☑️ Sélection multiple (Faustine + Victoria)</button>
+          <div class="select-bar" id="selectBar">
+            <span id="selectCount">0 sélectionnée</span>
+            <button type="button" id="selectConfirmBtn">🔒 Annuler / Désactiver</button>
+          </div>
+        </div>
+
+        <div class="child-section faustine">
+          <div class="child-title faustine">👧 Faustine<span class="bonus-badge" id="bonusBadgeFaustine"></span></div>
+          <div class="cantine-row" id="cantineFaustine"></div>
+          <div class="tasks" id="tasksFaustine"></div>
+        </div>
+
+        <div class="child-section victoria">
+          <div class="child-title victoria">👧 Victoria ✨<span class="bonus-badge" id="bonusBadgeVictoria"></span></div>
+          <div class="cantine-row" id="cantineVictoria"></div>
+          <div class="tasks" id="tasksVictoria"></div>
+        </div>
+
+        <div class="celebration" id="celebration">🎉 Bravo les filles, toutes les tâches de la journée sont faites ! 🌟</div>
+
+      </div>
+
+      <div class="recap-panel" id="viewRecap" style="display:none;">
+        <div class="recap-table">
+          <div class="recap-row recap-head">
+            <div class="recap-day"></div>
+            <div class="recap-pct faustine-head">Faustine</div>
+            <div class="recap-pct victoria-head">Victoria</div>
+          </div>
+          <div id="recapBody"></div>
+        </div>
+
+        <div class="recap-details">
+          <div class="recap-col">
+            <div class="recap-col-title faustine">👧 Faustine</div>
+            <div id="recapPerfectFaustine"></div>
+            <div class="recap-miss-list" id="recapMissesFaustine"></div>
+            <div class="recap-bonus" id="recapBonusFaustine"></div>
+            <div class="streak-box" id="streakFaustine"></div>
+          </div>
+          <div class="recap-col">
+            <div class="recap-col-title victoria">👧 Victoria</div>
+            <div id="recapPerfectVictoria"></div>
+            <div class="recap-miss-list" id="recapMissesVictoria"></div>
+            <div class="recap-bonus" id="recapBonusVictoria"></div>
+            <div class="streak-box" id="streakVictoria"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="note">Les coches sont enregistrées sur cette tablette pour toute la semaine (Lun → Dim). Une nouvelle semaine démarre automatiquement le lundi. Sur les jours d'école, la tâche "Déjeuner" n'apparaît que si la cantine est désactivée pour l'enfant ce jour-là (bouton en haut de sa liste). "Ranger sa chambre" n'apparaît que le mercredi et le dimanche. Toucher une tâche déjà cochée (ou déjà marquée "non applicable") demande le code parent, avec le choix d'annuler ou de la marquer "non à faire ce jour" (ex : absente ce jour-là) — elle est alors retirée du calcul du pourcentage. Le bouton "Sélection multiple" permet de choisir plusieurs tâches déjà cochées (ou non applicables), chez Faustine et/ou Victoria en même temps, pour les annuler ou les désactiver toutes en une seule fois, avec un seul code parent. Les corvées bonus (lave-vaisselle, aspirateur, contour doré) ne peuvent être cochées "faites" que par un adulte (code requis) : chaque jour où l'une des deux est faite, ça génère un bonus qui peut compenser un raté sur l'autre cette même semaine (les bonus ne se reportent pas à la semaine suivante) — le détail est dans l'onglet "Récap semaine".</div>
+
+  <div class="settings-toggle-row"><button id="settingsBtn">⚙️ Réglages parent (code requis)</button></div>
+
+</div>
+
+<!-- Code modal -->
+<div class="modal-overlay" id="codeOverlay">
+  <div class="modal-box">
+    <div class="modal-title">🔒 Code parent</div>
+    <input type="password" inputmode="numeric" maxlength="10" id="codeInput" placeholder="Code">
+    <div class="modal-error" id="codeError">Code incorrect, réessaie.</div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="codeCancel">Annuler</button>
+      <button class="modal-btn confirm" id="codeConfirm">Valider</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal-overlay" id="settingsOverlay">
+  <div class="modal-box wide">
+    <div class="modal-title">⚙️ Réglages parent — récompenses</div>
+    <div class="rules-summary">
+      Chaque semaine peut proposer une récompense selon la <b>moyenne de réussite depuis le début de la série en cours</b> (tâches bonus non comprises) — pas juste la semaine en cours :
+      <br><br>
+      <b>Semaine 1</b> : 2€ à 80%, 1€ à 60%, rien en dessous.
+      <br>
+      Si la récompense est <b>reportée</b> → <b>semaine 2</b> : moyenne des 2 semaines, 5€ à 80%, 3€ à 60%.
+      <br>
+      Si on reporte encore, la <b>semaine 3</b> passe automatiquement, sans décision (elle compte quand même dans la moyenne).
+      <br>
+      Report maximum : <b>semaine 4 (le mois)</b> : moyenne des 4 semaines, 10€ à 80%, 7€ à 60% — dernière étape, plus de report possible ensuite.
+      <br><br>
+      On ne peut donc reporter que jusqu'à la semaine 2 ou jusqu'à la semaine 4 (3 semaines de report maximum).
+      <br>
+      Si la moyenne passe sous 60% à une étape, rien n'est perdu ni remis à zéro : on avise au cas par cas, et la moyenne continue de se construire la semaine suivante.
+      <br><br>
+      La proposition (prendre / reporter) se fait dans l'onglet "Récap semaine", dans la case "Fin de semaine" de chaque enfant.
+    </div>
+    <div class="danger-zone">
+      <div class="danger-zone-title">⚠️ Zone sensible</div>
+      <div class="danger-zone-text">Supprime définitivement tout l'historique des tâches, les récaps et les séries de récompenses de Faustine et Victoria. Aucune sauvegarde n'est gardée.</div>
+      <button type="button" class="danger-btn" id="resetDataBtn">🗑️ Réinitialiser toutes les données</button>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="settingsCancel">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset confirmation modal -->
+<div class="modal-overlay" id="resetConfirmOverlay">
+  <div class="modal-box">
+    <div class="modal-title">⚠️ Tout réinitialiser ?</div>
+    <div class="reset-warning">Cette action supprime <b>définitivement</b> tout l'historique des tâches, le récap, et les séries de récompenses de Faustine et Victoria. C'est <b>impossible à annuler</b>.</div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="resetConfirmCancel">Annuler</button>
+      <button class="modal-btn danger" id="resetConfirmConfirm">Oui, tout supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task admin modal (uncheck / mark not-applicable-today) -->
+<div class="modal-overlay" id="taskAdminOverlay">
+  <div class="modal-box">
+    <div class="modal-title" id="taskAdminTitle">Que veux-tu faire ?</div>
+    <div id="taskAdminActions"></div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="taskAdminCancel">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const PARENT_CODE = "1905";
+
+  // days: optional array of day indices (0=Lun ... 6=Dim) this task applies to. Omit = every day.
+  // "dejeuner" is special-cased in tasksForDay() below instead of using `days`:
+  // on school days it only applies if that child's canteen toggle is off.
+  // adultOnly: marking the task DONE (not just undoing it) requires the parent
+  // code. bonusPair: the id of the other bonus chore that can compensate a
+  // raté on this one (see computeWeekBonusTasks).
+  const TASKS = [
+    { id: "petitdej", emoji: "☕🥐", label: "Petit-déj (table)" },
+    { id: "matin", emoji: "🦷☀️", label: "Dents — matin" },
+    { id: "dejeuner", emoji: "🥩🍟", label: "Déjeuner (table)" },
+    { id: "devoirs", emoji: "📚", label: "Devoirs" },
+    { id: "diner", emoji: "🍕🥣", label: "Dîner (table)" },
+    { id: "soir", emoji: "🦷🌙", label: "Dents — soir" },
+    { id: "chambre", emoji: "🧸🧩", label: "Ranger sa chambre", days: [2, 6] },
+    { id: "vaisselle", emoji: "🍽️", label: "Lave-vaisselle", adultOnly: true, bonusPair: "aspirateur" },
+    { id: "aspirateur", emoji: "🧹", label: "Aspirateur", adultOnly: true, bonusPair: "vaisselle" }
+  ];
+  const CHILDREN = ["faustine", "victoria"];
+  const STORAGE_KEY = "famille_routine_v2";
+  const REWARDS_KEY = "famille_rewards_v3";
+  const DAY_LABELS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+  const FULL_DAY_LABELS = ["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
+  const DAY_LABELS_FULL = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+
+  let storageAvailable = true;
+  let db = {};
+  let rewards = {};
+  let selectedDateStr = null;
+  let selectedDayIdx = 0;
+  let weekKey = null;
+  let weekDates = [];
+  let codeSuccessCallback = null;
+  // Multi-select is shared across both children: one mode toggle, one set of
+  // selections (keyed "child|taskId"), one code prompt for the whole batch.
+  let selectMode = false;
+  let selectedTasks = new Set();
+  function selKey(child, taskId) { return child + '|' + taskId; }
+
+  // Lun, Mar, Jeu, Ven — the school days where lunch at the canteen is the
+  // default, so "Déjeuner (table)" is normally not needed at home.
+  const SCHOOL_DAYS = [0, 1, 3, 4];
+
+  function isCantineOff(rec) {
+    return rec.cantine === false;
+  }
+
+  // cantineOff: whether THIS child is explicitly not at the canteen this day
+  // (irrelevant outside school days, where "dejeuner" always applies).
+  function tasksForDay(dayIdx, cantineOff) {
+    return TASKS.filter(t => {
+      if (t.id !== 'dejeuner') return !t.days || t.days.includes(dayIdx);
+      if (!SCHOOL_DAYS.includes(dayIdx)) return true;
+      return !!cantineOff;
+    });
+  }
+
+  function testStorage() {
+    try {
+      const k = "__test__" + Math.random();
+      localStorage.setItem(k, "1");
+      localStorage.removeItem(k);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function loadDb() {
+    if (!storageAvailable) return {};
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+
+  function saveDb() {
+    if (!storageAvailable) return;
+    try {
+      // Keep enough weeks around to compute month-based reward tiers (a month
+      // is ~4-5 ISO weeks; 20 weeks gives a few months of safety margin).
+      const keys = Object.keys(db).sort();
+      if (keys.length > 20) {
+        keys.slice(0, keys.length - 20).forEach(k => delete db[k]);
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+    } catch (e) { /* ignore */ }
+  }
+
+  // Take-or-report weekly streak. Each child has one `streak`:
+  //  - streakWeeks: ordered weekKeys accumulated since the streak's last
+  //    "prendre" (or since the very start). The reward at each checkpoint is
+  //    evaluated on the AVERAGE over all of these weeks pooled together —
+  //    not just the latest week's own %. Its length also drives the stage:
+  //    1 week = 'A' (semaine 1), 2 = 'B' (semaine 2), 3 = 'C' (semaine 3,
+  //    silent pass-through, no decision offered), 4+ = 'D' (semaine 4 / "le
+  //    mois", the final checkpoint — no further reporting past it; if
+  //    nothing is decided there, extra weeks just keep accumulating into the
+  //    average rather than anything being lost or force-reset).
+  //  - weekKey: the weekKey this streak was last synced against (detects a
+  //    new week starting so `decided` can reset for a fresh proposal).
+  //  - decided: whether prendre/reporter has already been chosen this week.
+  //  - lastDecision: the most recent resolved checkpoint, for display only.
+  function defaultChildStreak() {
+    return { streakWeeks: [], weekKey: null, decided: false, lastDecision: null };
+  }
+
+  // Separate from the reward streak above: a simple count of CONSECUTIVE
+  // fully-elapsed weeks that ended at 100% (all applicable tasks done, every
+  // day). Unlike the reward streak, this never resets on "prendre" — only a
+  // non-perfect week resets it. `count` only holds CONFIRMED past weeks; the
+  // live display adds +1 on top when the current week already qualifies
+  // (see renderRecapPerfect).
+  function defaultPerfectStreak() {
+    return { count: 0, weekKey: null };
+  }
+
+  function defaultRewards() {
+    const children = {};
+    CHILDREN.forEach(c => children[c] = { streak: defaultChildStreak(), perfectStreak: defaultPerfectStreak() });
+    return { children };
+  }
+
+  function loadRewards() {
+    if (storageAvailable) {
+      try {
+        const raw = localStorage.getItem(REWARDS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (!parsed.children) parsed.children = {};
+          CHILDREN.forEach(c => {
+            if (!parsed.children[c] || !parsed.children[c].streak || !Array.isArray(parsed.children[c].streak.streakWeeks)) {
+              parsed.children[c] = { streak: defaultChildStreak(), perfectStreak: defaultPerfectStreak() };
+            }
+            if (!parsed.children[c].perfectStreak) {
+              parsed.children[c].perfectStreak = defaultPerfectStreak();
+            }
+          });
+          return parsed;
+        }
+      } catch (e) { /* fall through to default */ }
+    }
+    return defaultRewards();
+  }
+
+  function saveRewards() {
+    if (!storageAvailable) return;
+    try { localStorage.setItem(REWARDS_KEY, JSON.stringify(rewards)); } catch (e) { /* ignore */ }
+  }
+
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  function toDateStr(d) { return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+
+  function getMonday(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+  function isoWeekInfo(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    return { isoYear: d.getUTCFullYear(), week };
+  }
+
+  function mondayOfIsoWeek(isoYear, week) {
+    // Jan 4th is always within ISO week 1
+    const jan4 = new Date(isoYear, 0, 4);
+    const jan4Monday = getMonday(jan4);
+    const target = new Date(jan4Monday);
+    target.setDate(jan4Monday.getDate() + (week - 1) * 7);
+    return target;
+  }
+
+  function ensureDay(dateStr) {
+    if (!db[weekKey]) db[weekKey] = { faustine: {}, victoria: {} };
+    CHILDREN.forEach(child => {
+      if (!db[weekKey][child][dateStr]) db[weekKey][child][dateStr] = {};
+    });
+  }
+
+  // Tally one day for one child, applying the bonus-chore rule:
+  //  - CASE 1: once every base (non-bonus) task for the day is done, any
+  //    bonus done that same day no longer inflates the fraction — it's
+  //    reported instead as "bonusCount" (shown as a badge), and done/total
+  //    stay capped at the base ceiling.
+  //  - CASE 2: while the base tasks aren't all done yet, each bonus done
+  //    nudges "done" up by one (never past the base total) without ever
+  //    touching the total itself. If that push happens to complete the base
+  //    total, it still doesn't count as "case 1" — only completing the base
+  //    tasks themselves switches into case 1.
+  function tallyDayForChild(rec, applicable) {
+    let regDone = 0, regTotal = 0, bonusDoneCount = 0;
+    applicable.forEach(t => {
+      if (rec[t.id] === 'na') return;
+      if (t.adultOnly) {
+        if (rec[t.id] === true) bonusDoneCount += 1;
+        return; // bonus chores never add to the base total
+      }
+      regTotal += 1;
+      if (rec[t.id] === true) regDone += 1;
+    });
+    const allRegularDone = regTotal > 0 && regDone === regTotal;
+    if (allRegularDone && bonusDoneCount > 0) {
+      return { done: regDone, total: regTotal, bonusCount: bonusDoneCount };
+    }
+    const done = regTotal > 0 ? Math.min(regDone + bonusDoneCount, regTotal) : regDone;
+    return { done, total: regTotal, bonusCount: 0 };
+  }
+
+  function dayCompletion(dateStr, dayIdx) {
+    let done = 0, total = 0;
+    CHILDREN.forEach(child => {
+      const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
+      const applicable = tasksForDay(dayIdx, isCantineOff(rec));
+      const tally = tallyDayForChild(rec, applicable);
+      done += tally.done;
+      total += tally.total;
+    });
+    return { done, total };
+  }
+
+  function childDayCompletion(child, dateStr, dayIdx) {
+    const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
+    const applicable = tasksForDay(dayIdx, isCantineOff(rec));
+    const tally = tallyDayForChild(rec, applicable);
+    return { done: tally.done, total: tally.total, bonusCount: tally.bonusCount, pct: tally.total ? (tally.done / tally.total * 100) : 0 };
+  }
+
+  function recapCellClass(stats) {
+    if (!stats.total) return 'empty';
+    if (stats.pct >= 100) return 'full';
+    if (stats.pct > 0) return 'partial';
+    return 'zero';
+  }
+
+  // Per-task count of missed occurrences this week, for a given child —
+  // excludes the adult-only bonus chores, which get their own
+  // compensation-aware section (see computeWeekBonusTasks).
+  function computeWeekMisses(child) {
+    const today = toDateStr(new Date());
+    const misses = {}; // taskId -> count
+    weekDates.forEach((d, i) => {
+      const dateStr = toDateStr(d);
+      if (dateStr > today) return; // not lived yet — can't count as a miss
+      const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
+      const applicable = tasksForDay(i, isCantineOff(rec));
+      applicable.forEach(t => {
+        if (t.adultOnly) return;
+        if (rec[t.id] === 'na') return;
+        if (rec[t.id] !== true) misses[t.id] = (misses[t.id] || 0) + 1;
+      });
+    });
+    return misses;
+  }
+
+  // For each adult-only bonus chore, tally this week's ratés (days missed)
+  // and how many days its paired chore was done (the source of a
+  // compensating bonus: doing aspirateur a given day covers a raté on
+  // lave-vaisselle that same week, and vice versa). Only days up to today
+  // count — a day that hasn't happened yet isn't a raté. Bonuses never roll
+  // over to another week (this always looks at the current week only).
+  function computeWeekBonusTasks(child) {
+    const today = toDateStr(new Date());
+    return TASKS.filter(t => t.adultOnly).map(task => {
+      let missed = 0, pairedDone = 0;
+      weekDates.forEach(d => {
+        const dateStr = toDateStr(d);
+        if (dateStr > today) return; // not lived yet
+        const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
+        if (rec[task.id] !== true) missed += 1;
+        if (task.bonusPair && rec[task.bonusPair] === true) pairedDone += 1;
+      });
+      const bonusUsed = Math.min(missed, pairedDone);
+      return { task, netMissed: missed - bonusUsed, unusedBonus: pairedDone - bonusUsed };
+    });
+  }
+
+  // Simple total: how many times a bonus chore (lave-vaisselle, aspirateur)
+  // was checked done this week, for this child — days up to today only.
+  function countWeekBonusDone(child) {
+    const today = toDateStr(new Date());
+    const bonusTasks = TASKS.filter(t => t.adultOnly);
+    let count = 0;
+    weekDates.forEach(d => {
+      const dateStr = toDateStr(d);
+      if (dateStr > today) return;
+      const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
+      bonusTasks.forEach(t => { if (rec[t.id] === true) count += 1; });
+    });
+    return count;
+  }
+
+  function renderRecapMisses(child) {
+    const container = document.getElementById('recapMisses' + capitalize(child));
+    if (!container) return;
+    const misses = computeWeekMisses(child);
+    const entries = TASKS.filter(t => !t.adultOnly && misses[t.id]);
+    if (!entries.length) {
+      container.innerHTML = `<div class="recap-empty">Aucune tâche ratée cette semaine 🌟</div>`;
+      return;
+    }
+    container.innerHTML = entries.map(t =>
+      `<div class="recap-miss-line">${t.emoji} ${t.label} : <b>${misses[t.id]}×</b></div>`
+    ).join('');
+  }
+
+  // Bonus tasks stay positive-only in the recap: no "raté" wording. Shows the
+  // total number of bonus chores done this week, plus the bonus reserve
+  // earned (nothing shown for the reserve part when there's none to report).
+  function renderRecapBonus(child) {
+    const container = document.getElementById('recapBonus' + capitalize(child));
+    if (!container) return;
+    const totalBonus = countWeekBonusDone(child);
+    const bonusInfo = computeWeekBonusTasks(child);
+    let html = `<div class="recap-bonus-line total">⭐ Bonus cette semaine : <b>${totalBonus}</b></div>`;
+    html += bonusInfo
+      .filter(({ unusedBonus }) => unusedBonus > 0)
+      .map(({ task, unusedBonus }) =>
+        `<div class="recap-bonus-line ok">${task.emoji} ${task.label} : ${unusedBonus} bonus en réserve 🎁</div>`
+      ).join('');
+    container.innerHTML = html;
+  }
+
+  function renderRecap() {
+    const container = document.getElementById('recapBody');
+    if (!container) return;
+    container.innerHTML = '';
+    weekDates.forEach((d, i) => {
+      const dateStr = toDateStr(d);
+      const fStats = childDayCompletion('faustine', dateStr, i);
+      const vStats = childDayCompletion('victoria', dateStr, i);
+      const row = document.createElement('div');
+      row.className = 'recap-row';
+      row.innerHTML = `
+        <div class="recap-day">${DAY_LABELS[i]}<span class="recap-date">${d.getDate()}</span></div>
+        <div class="recap-pct ${recapCellClass(fStats)}">${fStats.total ? Math.round(fStats.pct) + '%' : '—'}</div>
+        <div class="recap-pct ${recapCellClass(vStats)}">${vStats.total ? Math.round(vStats.pct) + '%' : '—'}</div>
+      `;
+      container.appendChild(row);
+    });
+    CHILDREN.forEach(child => {
+      syncPerfectStreak(child);
+      renderRecapPerfect(child);
+      renderRecapMisses(child);
+      renderRecapBonus(child);
+      syncWeekStreak(child);
+      renderStreakBox(child);
+    });
+  }
+
+  function switchTab(tab) {
+    const recapBtn = document.getElementById('tabRecap');
+    const viewToday = document.getElementById('viewToday');
+    const viewRecap = document.getElementById('viewRecap');
+    if (tab === 'recap') {
+      recapBtn.classList.add('active');
+      viewToday.style.display = 'none'; viewRecap.style.display = 'block';
+      renderRecap();
+    } else {
+      recapBtn.classList.remove('active');
+      viewRecap.style.display = 'none'; viewToday.style.display = 'block';
+    }
+  }
+
+  // Week stats "to date": only counts days already lived (dateStr <= today).
+  // For a week other than the current one, every one of its days is already
+  // in the past, so this equals a full 7-day tally; for the week still in
+  // progress it gives a live percentage that isn't artificially dragged down
+  // by days that haven't happened yet.
+  function computeWeekStats(child, wKey) {
+    const [isoYearStr, wStr] = wKey.split('-W');
+    const isoYear = parseInt(isoYearStr, 10);
+    const week = parseInt(wStr, 10);
+    const monday = mondayOfIsoWeek(isoYear, week);
+    const today = toDateStr(new Date());
+    const counters = { done: 0, total: 0 };
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      const dateStr = toDateStr(d);
+      if (dateStr > today) continue;
+      const rec = (db[wKey] && db[wKey][child] && db[wKey][child][dateStr]) || {};
+      const applicable = tasksForDay(i, isCantineOff(rec));
+      const tally = tallyDayForChild(rec, applicable);
+      counters.done += tally.done;
+      counters.total += tally.total;
+    }
+    return { done: counters.done, total: counters.total, pct: counters.total ? (counters.done / counters.total * 100) : 0 };
+  }
+
+  // Full week tally — unlike computeWeekStats, this does NOT stop at today:
+  // every one of the 7 days counts toward `total` even if it hasn't happened
+  // yet (an unlived day has no record, so it contributes 0 done out of its
+  // full applicable total). That's deliberate: it means "100%" can only ever
+  // be true once every single day of the week has actually been completed,
+  // never prematurely mid-week.
+  function computeFullWeekStats(child, wKey) {
+    const [isoYearStr, wStr] = wKey.split('-W');
+    const isoYear = parseInt(isoYearStr, 10);
+    const week = parseInt(wStr, 10);
+    const monday = mondayOfIsoWeek(isoYear, week);
+    const counters = { done: 0, total: 0 };
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      const dateStr = toDateStr(d);
+      const rec = (db[wKey] && db[wKey][child] && db[wKey][child][dateStr]) || {};
+      const applicable = tasksForDay(i, isCantineOff(rec));
+      const tally = tallyDayForChild(rec, applicable);
+      counters.done += tally.done;
+      counters.total += tally.total;
+    }
+    return { done: counters.done, total: counters.total, pct: counters.total ? (counters.done / counters.total * 100) : 0 };
+  }
+
+  function isWeekPerfect(stats) {
+    return stats.total > 0 && stats.done === stats.total;
+  }
+
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  // --- Consecutive 100% weeks ---
+  // Brings a child's perfect-week counter up to date with the current
+  // `weekKey`: when a new week is detected, the JUST-ENDED week (now fully
+  // in the past, so computeFullWeekStats reflects its true final result) is
+  // checked — a perfect week increments the streak, anything else resets it
+  // to 0. This only ever touches CONFIRMED, fully-elapsed weeks; the live
+  // "is this week already perfect" check is done separately for display.
+  function syncPerfectStreak(child) {
+    const ps = rewards.children[child].perfectStreak;
+    if (ps.weekKey === weekKey) return;
+    if (ps.weekKey) {
+      const stats = computeFullWeekStats(child, ps.weekKey);
+      ps.count = isWeekPerfect(stats) ? ps.count + 1 : 0;
+    }
+    ps.weekKey = weekKey;
+    saveRewards();
+  }
+
+  // Sparkly celebration + streak count in the recap. Shows the big banner
+  // only while the CURRENT week is already fully perfect; otherwise, if
+  // there's a confirmed streak from earlier weeks, shows a quieter line so
+  // the count stays visible even mid-week.
+  function renderRecapPerfect(child) {
+    const container = document.getElementById('recapPerfect' + capitalize(child));
+    if (!container) return;
+    const ps = rewards.children[child].perfectStreak;
+    const currentStats = computeFullWeekStats(child, weekKey);
+    const currentPerfect = isWeekPerfect(currentStats);
+    const displayCount = ps.count + (currentPerfect ? 1 : 0);
+
+    if (currentPerfect) {
+      container.innerHTML = `
+        <div class="recap-perfect-banner">
+          ✨🎉 Semaine 100% complète ! 🎉✨
+          <span class="streak-count">🔥 ${displayCount} semaine${displayCount > 1 ? 's' : ''} à 100% d'affilée</span>
+        </div>
+      `;
+    } else if (displayCount > 0) {
+      container.innerHTML = `<div class="recap-streak-line">🔥 ${displayCount} semaine${displayCount > 1 ? 's' : ''} à 100% d'affilée jusqu'ici</div>`;
+    } else {
+      container.innerHTML = '';
+    }
+  }
+
+  // --- Rewards: take-or-report weekly streak ---
+  // Fixed formula, not user-editable (the rule is spelled out as plain text
+  // in "Réglages parent"). Stage 'C' (semaine 3) has no tier: it's a silent
+  // pass-through week — no decision is ever offered there, but it still
+  // counts into the average for the next checkpoint.
+  function weeklyStreakTier(stage, pct) {
+    const tiers = {
+      A: [{ min: 80, amount: 2 }, { min: 60, amount: 1 }],
+      B: [{ min: 80, amount: 5 }, { min: 60, amount: 3 }],
+      D: [{ min: 80, amount: 10 }, { min: 60, amount: 7 }]
+    };
+    const list = tiers[stage] || [];
+    for (const t of list) if (pct >= t.min) return t;
+    return null;
+  }
+
+  const STAGE_LABELS = { A: 'Semaine 1', B: 'Semaine 2', C: 'Semaine 3', D: 'Semaine 4 (le mois)' };
+
+  // The stage is simply derived from how many weeks have accumulated in the
+  // current streak — 1 => A, 2 => B, 3 => C, 4 or more => D (D is the final
+  // checkpoint: if nothing is decided there, extra weeks just keep piling
+  // into the average rather than being capped or reset).
+  function stageForWeekCount(n) {
+    if (n <= 1) return 'A';
+    if (n === 2) return 'B';
+    if (n === 3) return 'C';
+    return 'D';
+  }
+
+  // Pooled done/total across every week in the streak — the checkpoint
+  // reward is always evaluated on this running average, not on a single
+  // week's own %.
+  function computeStreakAverageStats(child, weekKeys) {
+    const counters = { done: 0, total: 0 };
+    weekKeys.forEach(wKey => {
+      const s = computeWeekStats(child, wKey);
+      counters.done += s.done;
+      counters.total += s.total;
+    });
+    return { done: counters.done, total: counters.total, pct: counters.total ? (counters.done / counters.total * 100) : 0 };
+  }
+
+  // Brings a child's streak up to date with the current `weekKey`: the
+  // current week is added to streakWeeks (if not already the last one
+  // tracked), and `decided` resets so a fresh proposal (using the updated,
+  // larger average) is offered for the new week. Nothing is ever force-reset
+  // or auto-cashed-out here — if a decision is skipped, the average simply
+  // keeps accumulating until a parent explicitly acts ("on avisera, mais on
+  // n'annule pas tout").
+  function syncWeekStreak(child) {
+    const streak = rewards.children[child].streak;
+    if (streak.weekKey !== weekKey) {
+      streak.weekKey = weekKey;
+      streak.decided = false;
+    }
+    if (!streak.streakWeeks.length || streak.streakWeeks[streak.streakWeeks.length - 1] !== weekKey) {
+      streak.streakWeeks.push(weekKey);
+    }
+    saveRewards();
+  }
+
+  // Parent-confirmed decision for the CURRENT checkpoint (evaluated on the
+  // streak's running average). "Prendre" cashes out and starts a brand new
+  // streak from scratch; "reporter" just records the choice — the average
+  // keeps accumulating regardless, whether reported explicitly or left
+  // undecided.
+  function decideStreak(child, action) {
+    const streak = rewards.children[child].streak;
+    if (streak.decided) return;
+    const stage = stageForWeekCount(streak.streakWeeks.length);
+    if (stage === 'C') return; // no decision possible at the silent pass-through week
+    const stats = computeStreakAverageStats(child, streak.streakWeeks);
+    const tier = weeklyStreakTier(stage, stats.pct);
+    if (!tier) return; // nothing earned yet at this checkpoint — nothing to decide
+    if (action === 'prendre') {
+      streak.lastDecision = { stage, pct: Math.round(stats.pct), weeks: streak.streakWeeks.length, amount: tier.amount, action: 'pris' };
+      streak.streakWeeks = [];
+    } else if (action === 'reporter') {
+      if (stage === 'D') return; // no reporting past the final checkpoint
+      streak.lastDecision = { stage, pct: Math.round(stats.pct), weeks: streak.streakWeeks.length, amount: tier.amount, action: 'reporté' };
+      // streakWeeks stays as-is — it keeps growing as new weeks are synced.
+    } else {
+      return;
+    }
+    streak.decided = true;
+    saveRewards();
+    renderStreakBox(child);
+  }
+
+  function renderStreakBox(child) {
+    const container = document.getElementById('streak' + capitalize(child));
+    if (!container) return;
+    const streak = rewards.children[child].streak;
+    const n = streak.streakWeeks.length;
+    const stage = stageForWeekCount(n);
+
+    if (stage === 'C') {
+      container.innerHTML = `
+        <div class="streak-title">🎁 Fin de semaine — ${STAGE_LABELS.C}</div>
+        <div class="streak-msg locked">🔒 Pas de décision cette semaine — rendez-vous à la semaine 4 (le mois). Cette semaine compte quand même dans la moyenne.</div>
+      `;
+      return;
+    }
+
+    const stats = computeStreakAverageStats(child, streak.streakWeeks);
+    const pctRounded = Math.round(stats.pct);
+    const tier = weeklyStreakTier(stage, stats.pct);
+    const label = (stage === 'D' && n > 4) ? `Semaine 4+ (${n} semaines cumulées)` : STAGE_LABELS[stage];
+
+    let html = `<div class="streak-title">🎁 Fin de semaine — ${label}</div>`;
+    html += `<div class="streak-pct">Moyenne sur ${n} semaine${n > 1 ? 's' : ''} : <b>${stats.total ? pctRounded + '%' : '—'}</b></div>`;
+
+    if (streak.decided) {
+      const d = streak.lastDecision;
+      if (d && d.action === 'pris') {
+        html += `<div class="streak-decided pris">✅ Récompense prise : ${d.amount}€</div>`;
+      } else if (d && d.action === 'reporté') {
+        html += `<div class="streak-decided reporte">➡️ Reporté — on continue, la moyenne se poursuit la semaine prochaine.</div>`;
+      }
+    } else if (tier) {
+      html += `<div class="streak-actions">` +
+        `<button type="button" class="streak-btn take" data-child="${child}" data-action="prendre">Prendre ${tier.amount}€</button>` +
+        (stage !== 'D' ? `<button type="button" class="streak-btn report" data-child="${child}" data-action="reporter">Reporter</button>` : '') +
+        `</div>`;
+    } else {
+      html += `<div class="streak-msg">Pas de récompense à ce palier pour l'instant (moins de 60% de moyenne) — rien n'est perdu, on continue et on en reparle.</div>`;
+    }
+
+    container.innerHTML = html;
+    container.querySelectorAll('.streak-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const c = btn.dataset.child, action = btn.dataset.action;
+        askForCode(() => decideStreak(c, action));
+      });
+    });
+  }
+
+  function renderTodayBanner() {
+    const el = document.getElementById('todayBanner');
+    if (!el) return;
+    const idx = (new Date().getDay() + 6) % 7; // 0=lundi … 6=dimanche
+    el.textContent = `Aujourd'hui, c'est ${FULL_DAY_LABELS[idx]} !`;
+  }
+
+  function renderDaysNav() {
+    renderTodayBanner();
+    const nav = document.getElementById('daysNav');
+    nav.innerHTML = "";
+    const todayStr = toDateStr(new Date());
+    weekDates.forEach((d, i) => {
+      const dateStr = toDateStr(d);
+      const btn = document.createElement('div');
+      btn.className = 'day-btn';
+      if (dateStr === todayStr) btn.classList.add('today');
+      if (dateStr === selectedDateStr) btn.classList.add('selected');
+      const { done, total } = dayCompletion(dateStr, i);
+      let dotClass = 'dot';
+      if (total > 0 && done === total) dotClass += ' full';
+      else if (done > 0) dotClass += ' partial';
+      btn.innerHTML = `<span class="day-label">${DAY_LABELS_FULL[i]} <span class="dnum">${d.getDate()}</span></span><span class="${dotClass}"></span>`;
+      btn.addEventListener('click', () => {
+        selectedDateStr = dateStr; selectedDayIdx = i;
+        // Switching day: drop any in-progress multi-selection so it can't be
+        // applied against the wrong day.
+        selectMode = false; selectedTasks.clear();
+        // A day button always means "show me that day's routine" — even if
+        // we were sitting on the recap tab.
+        switchTab('today');
+        renderAll();
+      });
+      nav.appendChild(btn);
+    });
+  }
+
+  function renderTasks() {
+    ensureDay(selectedDateStr);
+    CHILDREN.forEach(child => {
+      const rec = db[weekKey][child][selectedDateStr];
+      const applicable = tasksForDay(selectedDayIdx, isCantineOff(rec));
+      renderCantineToggle(child, rec);
+      renderBonusBadge(child, rec, applicable);
+      const container = document.getElementById(child === 'faustine' ? 'tasksFaustine' : 'tasksVictoria');
+      container.innerHTML = "";
+      applicable.forEach(task => {
+        const val = rec[task.id];
+        const state = val === true ? 'done' : (val === 'na' ? 'na' : 'todo');
+        // Multi-select only concerns tasks that already need admin action
+        // (already done, or already "na") — that's what can be batch
+        // annulé/désactivé. A still-to-do task has nothing to select.
+        const canSelect = state === 'done' || state === 'na';
+        const isSelected = selectedTasks.has(selKey(child, task.id));
+        const btn = document.createElement('div');
+        let cls = 'task-btn' + (state === 'done' ? ' done' : (state === 'na' ? ' na' : ''));
+        if (task.adultOnly) cls += ' bonus-task';
+        if (selectMode) {
+          if (canSelect) {
+            cls += ' selectable';
+            if (isSelected) cls += ' select-checked';
+          } else {
+            cls += ' select-disabled';
+          }
+        }
+        btn.className = cls;
+        btn.dataset.taskId = task.id;
+        btn.innerHTML = `<span class="emoji">${task.emoji}</span>${task.label}` +
+          (state === 'na' ? `<span class="na-tag">non applicable</span>` : '') +
+          (selectMode && canSelect && isSelected ? `<span class="na-tag">✔ sélectionnée</span>` : '');
+        if (selectMode) {
+          if (canSelect) btn.addEventListener('click', () => toggleTaskSelection(child, task.id));
+        } else {
+          btn.addEventListener('click', () => onTaskClick(child, task.id));
+        }
+        container.appendChild(btn);
+      });
+    });
+
+    const toggleBtn = document.getElementById('selectToggleBtn');
+    if (toggleBtn) {
+      toggleBtn.textContent = selectMode ? '✖️ Annuler la sélection' : '☑️ Sélection multiple (Faustine + Victoria)';
+      toggleBtn.classList.toggle('active', selectMode);
+    }
+    const bar = document.getElementById('selectBar');
+    if (bar) {
+      bar.classList.toggle('show', selectMode);
+      const n = selectedTasks.size;
+      const countEl = document.getElementById('selectCount');
+      if (countEl) countEl.textContent = `${n} sélectionnée${n > 1 ? 's' : ''}`;
+      const confirmBtn = document.getElementById('selectConfirmBtn');
+      if (confirmBtn) confirmBtn.disabled = n === 0;
+    }
+    updateProgress();
+  }
+
+  // --- Canteen toggle (school days only) ---
+  // A quick logistics setting, not code-gated: it only ever adds an
+  // obligation (canteen off => the lunch task appears) or removes one back
+  // to the default (canteen on => no lunch task at home that day).
+  function renderCantineToggle(child, rec) {
+    const container = document.getElementById('cantine' + capitalize(child));
+    if (!container) return;
+    if (!SCHOOL_DAYS.includes(selectedDayIdx)) {
+      container.innerHTML = '';
+      return;
+    }
+    const off = isCantineOff(rec);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cantine-toggle' + (off ? ' off' : ' on');
+    btn.innerHTML = off
+      ? `🍽️ Cantine ce midi : <b>Non</b><span class="cantine-hint">repas à gérer à la maison</span>`
+      : `🍽️ Cantine ce midi : <b>Oui</b><span class="cantine-hint">pas de tâche repas de midi</span>`;
+    btn.addEventListener('click', () => toggleCantine(child));
+    container.innerHTML = '';
+    container.appendChild(btn);
+  }
+
+  // Shows "⭐ X bonus ⭐" in the child's name banner once her base tasks for
+  // the day are all done and at least one bonus chore is done too (case 1
+  // of tallyDayForChild) — hidden otherwise.
+  function renderBonusBadge(child, rec, applicable) {
+    const badge = document.getElementById('bonusBadge' + capitalize(child));
+    if (!badge) return;
+    const tally = tallyDayForChild(rec, applicable);
+    if (tally.bonusCount > 0) {
+      badge.textContent = `⭐ ${tally.bonusCount} bonus ⭐`;
+      badge.classList.add('show');
+    } else {
+      badge.textContent = '';
+      badge.classList.remove('show');
+    }
+  }
+
+  function toggleCantine(child) {
+    ensureDay(selectedDateStr);
+    const rec = db[weekKey][child][selectedDateStr];
+    if (isCantineOff(rec)) {
+      delete rec.cantine; // back to the default: at the canteen
+    } else {
+      rec.cantine = false; // not at the canteen today
+    }
+    saveDb();
+    renderTasks();
+    renderDaysNav();
+  }
+
+  function toggleTaskSelection(child, taskId) {
+    const key = selKey(child, taskId);
+    if (selectedTasks.has(key)) selectedTasks.delete(key); else selectedTasks.add(key);
+    renderTasks();
+  }
+
+  function toggleSelectMode() {
+    selectMode = !selectMode;
+    if (!selectMode) selectedTasks.clear();
+    renderTasks();
+  }
+
+  // Multi-select only ever collects already-done/"na" tasks (see renderTasks),
+  // so confirming always routes through the same parent-code gate as a
+  // single-task annulation/na — it just applies the choice to every selected
+  // task at once instead of one at a time, across both children if needed.
+  function confirmBatchAction() {
+    if (!selectedTasks.size) return;
+    const items = Array.from(selectedTasks).map(key => {
+      const [child, taskId] = key.split('|');
+      return { child, taskId };
+    });
+    askForCode(() => openBatchAdminModal(items));
+  }
+
+  document.getElementById('selectToggleBtn').addEventListener('click', toggleSelectMode);
+  document.getElementById('selectConfirmBtn').addEventListener('click', confirmBatchAction);
+
+  function onTaskClick(child, taskId) {
+    // Always read the current state fresh from the db rather than trusting a
+    // closure captured at render time, since a direct DOM patch (bounce) would
+    // otherwise leave stale click handlers bound to the pre-click state.
+    const rec = db[weekKey][child][selectedDateStr];
+    const val = rec[taskId];
+    const state = val === true ? 'done' : (val === 'na' ? 'na' : 'todo');
+    if (state === 'todo') {
+      const task = TASKS.find(t => t.id === taskId);
+      if (task && task.adultOnly) {
+        // Bonus chores (lave-vaisselle, aspirateur): only an adult can mark
+        // them done, not just undo them — the code is required either way.
+        askForCode(() => markTaskDone(child, taskId));
+      } else {
+        markTaskDone(child, taskId);
+      }
+    } else {
+      // already done or already marked "na": require the parent code, then offer a choice
+      askForCode(() => openTaskAdminModal(child, taskId, state));
+    }
+  }
+
+  function markTaskDone(child, taskId) {
+    const rec = db[weekKey][child][selectedDateStr];
+    rec[taskId] = true;
+    saveDb();
+    renderTasks();
+    renderDaysNav();
+    const container = document.getElementById('tasks' + capitalize(child));
+    const newBtn = container.querySelector(`.task-btn[data-task-id="${taskId}"]`);
+    if (newBtn) {
+      newBtn.classList.remove('bounce');
+      void newBtn.offsetWidth;
+      newBtn.classList.add('bounce');
+    }
+  }
+
+  // --- Task admin modal (uncheck / mark not-applicable-today) ---
+  let taskAdminContext = null; // single-task admin: { child, taskId }
+  let batchAdminContext = null; // multi-select admin: { child, taskIds: [...] }
+
+  function makeAdminBtn(label, sub, onClick, variant) {
+    const b = document.createElement('button');
+    b.className = 'task-admin-btn' + (variant ? ' ' + variant : '');
+    b.innerHTML = `${label}<span class="sub">${sub}</span>`;
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  function openTaskAdminModal(child, taskId, state) {
+    taskAdminContext = { child, taskId };
+    batchAdminContext = null;
+    const task = TASKS.find(t => t.id === taskId);
+    const childLabel = child === 'faustine' ? 'Faustine' : 'Victoria';
+    document.getElementById('taskAdminTitle').textContent = `${task.emoji} ${task.label} — ${childLabel}`;
+    const actions = document.getElementById('taskAdminActions');
+    actions.innerHTML = '';
+    if (state === 'done') {
+      actions.appendChild(makeAdminBtn(
+        '↩️ Annulation',
+        'Remettre la tâche à faire (décocher)',
+        () => taskAdminApply(false)
+      ));
+      actions.appendChild(makeAdminBtn(
+        '🚫 Action non à faire ce jour',
+        'Ex : repas à la cantine — retirée du calcul du pourcentage',
+        () => taskAdminApply('na'),
+        'warn'
+      ));
+    } else if (state === 'na') {
+      actions.appendChild(makeAdminBtn(
+        '↩️ Réactiver la tâche',
+        'La tâche redevient "à faire" pour ce jour',
+        () => taskAdminApply(false)
+      ));
+    }
+    document.getElementById('taskAdminOverlay').classList.add('show');
+  }
+
+  function taskAdminApply(value) {
+    if (!taskAdminContext) return;
+    const { child, taskId } = taskAdminContext;
+    const rec = db[weekKey][child][selectedDateStr];
+    if (value === false) {
+      delete rec[taskId];
+    } else {
+      rec[taskId] = value;
+    }
+    saveDb();
+    closeTaskAdminModal();
+    renderTasks();
+    renderDaysNav();
+  }
+
+  function openBatchAdminModal(items) {
+    // items: [{ child, taskId }, ...] — can span both children at once.
+    batchAdminContext = { items };
+    taskAdminContext = null;
+    const n = items.length;
+    const childrenInvolved = new Set(items.map(it => it.child));
+    const who = childrenInvolved.size > 1
+      ? 'Faustine + Victoria'
+      : (childrenInvolved.has('faustine') ? 'Faustine' : 'Victoria');
+    document.getElementById('taskAdminTitle').textContent = `${n} tâche${n > 1 ? 's' : ''} sélectionnée${n > 1 ? 's' : ''} — ${who}`;
+    const actions = document.getElementById('taskAdminActions');
+    actions.innerHTML = '';
+
+    // If every selected task is already "na", the only sensible action is to
+    // reactivate them. Showing "marquer non à faire" as well would be a
+    // confusing no-op there — it's the more visually prominent (orange)
+    // button, so it's easy to tap by mistake expecting it to reactivate,
+    // and nothing visibly happens since the task was already "na".
+    const allAlreadyNa = items.every(({ child, taskId }) => {
+      const rec = (db[weekKey] && db[weekKey][child] && db[weekKey][child][selectedDateStr]) || {};
+      return rec[taskId] === 'na';
+    });
+
+    if (allAlreadyNa) {
+      actions.appendChild(makeAdminBtn(
+        '↩️ Tout réactiver',
+        'Remettre ces tâches à faire pour ce jour',
+        () => batchAdminApply(false)
+      ));
+    } else {
+      actions.appendChild(makeAdminBtn(
+        '↩️ Tout annuler',
+        'Remettre ces tâches à faire (décocher)',
+        () => batchAdminApply(false)
+      ));
+      actions.appendChild(makeAdminBtn(
+        '🚫 Tout marquer non à faire ce jour',
+        'Ex : repas à la cantine — retirées du calcul du pourcentage',
+        () => batchAdminApply('na'),
+        'warn'
+      ));
+    }
+    document.getElementById('taskAdminOverlay').classList.add('show');
+  }
+
+  function batchAdminApply(value) {
+    if (!batchAdminContext) return;
+    const { items } = batchAdminContext;
+    items.forEach(({ child, taskId }) => {
+      const rec = db[weekKey][child][selectedDateStr];
+      if (value === false) delete rec[taskId];
+      else rec[taskId] = value;
+    });
+    saveDb();
+    closeTaskAdminModal();
+    selectMode = false;
+    selectedTasks.clear();
+    renderTasks();
+    renderDaysNav();
+  }
+
+  function closeTaskAdminModal() {
+    document.getElementById('taskAdminOverlay').classList.remove('show');
+    taskAdminContext = null;
+    batchAdminContext = null;
+  }
+  document.getElementById('taskAdminCancel').addEventListener('click', closeTaskAdminModal);
+
+  function updateProgress() {
+    const fStats = childDayCompletion('faustine', selectedDateStr, selectedDayIdx);
+    const vStats = childDayCompletion('victoria', selectedDateStr, selectedDayIdx);
+    document.getElementById('progressTextFaustine').textContent = `${fStats.done} / ${fStats.total}`;
+    document.getElementById('progressFillFaustine').style.width = fStats.total ? `${fStats.pct}%` : '0%';
+    document.getElementById('progressTextVictoria').textContent = `${vStats.done} / ${vStats.total}`;
+    document.getElementById('progressFillVictoria').style.width = vStats.total ? `${vStats.pct}%` : '0%';
+    const isToday = selectedDateStr === toDateStr(new Date());
+    document.getElementById('progressDayLabel').textContent = isToday ? "Tâches faites aujourd'hui" : "Tâches faites ce jour-là";
+    const { done, total } = dayCompletion(selectedDateStr, selectedDayIdx);
+    document.getElementById('celebration').classList.toggle('show', total > 0 && done === total);
+  }
+
+  function renderAll() {
+    renderDaysNav();
+    renderTasks();
+  }
+
+  // --- Code modal ---
+  function askForCode(onSuccess) {
+    codeSuccessCallback = onSuccess;
+    document.getElementById('codeError').style.display = 'none';
+    document.getElementById('codeInput').value = '';
+    document.getElementById('codeOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('codeInput').focus(), 50);
+  }
+  function closeCodeModal() {
+    document.getElementById('codeOverlay').classList.remove('show');
+    codeSuccessCallback = null;
+  }
+  function submitCode() {
+    const val = document.getElementById('codeInput').value;
+    if (val === PARENT_CODE) {
+      const cb = codeSuccessCallback;
+      closeCodeModal();
+      if (cb) cb();
+    } else {
+      document.getElementById('codeError').style.display = 'block';
+    }
+  }
+  document.getElementById('codeCancel').addEventListener('click', closeCodeModal);
+  document.getElementById('codeConfirm').addEventListener('click', submitCode);
+  document.getElementById('codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitCode(); });
+
+  // --- Settings modal: now a static rule summary (nothing to edit — the
+  // reward formula is fixed, see weeklyStreakTier). ---
+  function openSettings() {
+    document.getElementById('settingsOverlay').classList.add('show');
+  }
+  function closeSettings() {
+    document.getElementById('settingsOverlay').classList.remove('show');
+  }
+  document.getElementById('settingsBtn').addEventListener('click', () => askForCode(openSettings));
+  document.getElementById('settingsCancel').addEventListener('click', closeSettings);
+
+  // --- Reset all data: double-gated (code, then an explicit confirm modal)
+  // since it's the one truly irreversible action in the app. ---
+  function openResetConfirm() {
+    document.getElementById('resetConfirmOverlay').classList.add('show');
+  }
+  function closeResetConfirm() {
+    document.getElementById('resetConfirmOverlay').classList.remove('show');
+  }
+  function confirmReset() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(REWARDS_KEY);
+    } catch (e) { /* ignore */ }
+    location.reload();
+  }
+  document.getElementById('resetDataBtn').addEventListener('click', () => askForCode(openResetConfirm));
+  document.getElementById('resetConfirmCancel').addEventListener('click', closeResetConfirm);
+  document.getElementById('resetConfirmConfirm').addEventListener('click', confirmReset);
+
+  document.getElementById('tabRecap').addEventListener('click', () => switchTab('recap'));
+
+  function init() {
+    storageAvailable = testStorage();
+    document.getElementById('storageBanner').classList.toggle('show', !storageAvailable);
+    db = loadDb();
+    rewards = loadRewards();
+
+    const today = new Date();
+    const monday = getMonday(today);
+    weekDates = Array.from({length:7}, (_,i) => { const d = new Date(monday); d.setDate(monday.getDate()+i); return d; });
+    const info = isoWeekInfo(weekDates[0]);
+    weekKey = `${info.isoYear}-W${pad(info.week)}`;
+    selectedDateStr = toDateStr(today);
+    selectedDayIdx = weekDates.findIndex(d => toDateStr(d) === selectedDateStr);
+
+    CHILDREN.forEach(child => { syncWeekStreak(child); syncPerfectStreak(child); });
+    renderAll();
+  }
+
+  init();
+</script>
+</body>
+</html>
