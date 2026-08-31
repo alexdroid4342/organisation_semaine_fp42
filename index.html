@@ -11,6 +11,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Routine semaine">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
 <style>
   :root {
     --faustine: #ff5ca8;
@@ -54,6 +57,13 @@
     margin-bottom: 16px;
   }
   .header h1 { margin: 0; font-size: 26px; }
+  .today-banner {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: 26px;
+    color: #ffc078;
+    margin-top: 2px;
+  }
 
   .days-nav {
     display: grid;
@@ -215,23 +225,26 @@
   .recap-pct.zero { background: transparent; color: var(--muted); }
 
   .tasks {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
   }
   .task-btn {
+    flex: 1 1 0;
+    min-width: 0;
     border: 2.5px solid var(--border);
     background: var(--surface-2);
-    border-radius: 14px;
-    padding: 16px 10px;
+    border-radius: 12px;
+    padding: 8px 3px 6px;
     text-align: center;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 10.5px;
+    line-height: 1.2;
     user-select: none;
     transition: transform .15s ease, background .2s ease, border-color .2s ease;
-    min-height: 84px;
+    min-height: 60px;
   }
-  .task-btn .emoji { font-size: 28px; display: block; margin-bottom: 6px; }
+  .task-btn .emoji { font-size: 18px; display: block; margin-bottom: 3px; }
   .task-btn:active { transform: scale(0.95); }
   .faustine .task-btn.done { background: var(--faustine-bg); border-color: var(--faustine); }
   .victoria .task-btn.done { background: var(--victoria-bg); border-color: var(--victoria); }
@@ -250,10 +263,10 @@
   .task-btn.na .emoji::after { content: " \1F6AB"; }
   .na-tag {
     display: block;
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 700;
     color: var(--muted);
-    margin-top: 4px;
+    margin-top: 3px;
   }
   /* Bonus chores (lave-vaisselle, aspirateur) — adult-validated, flagged with
      a gold outline and slight transparency so they stand out. */
@@ -509,6 +522,7 @@
 
   <div class="header">
     <h1 id="titleLabel">🏡 Notre routine de la semaine</h1>
+    <div class="today-banner" id="todayBanner"></div>
   </div>
 
   <div class="tabs-row">
@@ -684,6 +698,7 @@
   const STORAGE_KEY = "famille_routine_v2";
   const REWARDS_KEY = "famille_rewards_v3";
   const DAY_LABELS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+  const FULL_DAY_LABELS = ["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
 
   let storageAvailable = true;
   let db = {};
@@ -1265,7 +1280,15 @@
     });
   }
 
+  function renderTodayBanner() {
+    const el = document.getElementById('todayBanner');
+    if (!el) return;
+    const idx = (new Date().getDay() + 6) % 7; // 0=lundi … 6=dimanche
+    el.textContent = `Aujourd'hui, c'est ${FULL_DAY_LABELS[idx]} !`;
+  }
+
   function renderDaysNav() {
+    renderTodayBanner();
     const nav = document.getElementById('daysNav');
     nav.innerHTML = "";
     const todayStr = toDateStr(new Date());
