@@ -65,29 +65,42 @@
     margin-top: 2px;
   }
 
+  #viewToday {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .today-main {
+    flex: 1;
+    min-width: 0;
+  }
   .days-nav {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    flex: 0 0 90px;
   }
   .day-btn {
     background: var(--surface);
     border: 2.5px solid var(--border);
     border-radius: 14px;
-    padding: 10px 4px 8px;
+    padding: 8px 4px;
     text-align: center;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
   }
-  .day-btn .dnum { display:block; font-size: 16px; font-weight: 700; margin-top: 2px; }
+  .day-btn .dnum { display:inline-block; font-size: 14px; font-weight: 700; margin-top: 0; }
   .day-btn .dot {
     display: inline-block;
     width: 8px; height: 8px;
     border-radius: 50%;
     background: #6b6f76;
-    margin-top: 5px;
+    margin-top: 0;
   }
   .day-btn.today { border-color: #ffa94d; }
   .day-btn.selected { background: rgba(247,103,7,0.18); border-color: #f76707; }
@@ -534,41 +547,45 @@
 
     <div class="days-nav" id="daysNav"></div>
 
-    <div class="progress-wrap">
-      <div class="progress-title" id="progressDayLabel">Tâches faites</div>
-      <div class="progress-row">
-        <div class="progress-name faustine">Faustine</div>
-        <div class="progress-bar"><div class="progress-fill faustine" id="progressFillFaustine"></div></div>
-        <div class="progress-count" id="progressTextFaustine">0 / 0</div>
+    <div class="today-main">
+
+      <div class="progress-wrap">
+        <div class="progress-title" id="progressDayLabel">Tâches faites</div>
+        <div class="progress-row">
+          <div class="progress-name faustine">Faustine</div>
+          <div class="progress-bar"><div class="progress-fill faustine" id="progressFillFaustine"></div></div>
+          <div class="progress-count" id="progressTextFaustine">0 / 0</div>
+        </div>
+        <div class="progress-row">
+          <div class="progress-name victoria">Victoria</div>
+          <div class="progress-bar"><div class="progress-fill victoria" id="progressFillVictoria"></div></div>
+          <div class="progress-count" id="progressTextVictoria">0 / 0</div>
+        </div>
       </div>
-      <div class="progress-row">
-        <div class="progress-name victoria">Victoria</div>
-        <div class="progress-bar"><div class="progress-fill victoria" id="progressFillVictoria"></div></div>
-        <div class="progress-count" id="progressTextVictoria">0 / 0</div>
+
+      <div class="select-toggle-row">
+        <button type="button" id="selectToggleBtn">☑️ Sélection multiple (Faustine + Victoria)</button>
+        <div class="select-bar" id="selectBar">
+          <span id="selectCount">0 sélectionnée</span>
+          <button type="button" id="selectConfirmBtn">🔒 Annuler / Désactiver</button>
+        </div>
       </div>
-    </div>
 
-    <div class="select-toggle-row">
-      <button type="button" id="selectToggleBtn">☑️ Sélection multiple (Faustine + Victoria)</button>
-      <div class="select-bar" id="selectBar">
-        <span id="selectCount">0 sélectionnée</span>
-        <button type="button" id="selectConfirmBtn">🔒 Annuler / Désactiver</button>
+      <div class="child-section faustine">
+        <div class="child-title faustine">👧 Faustine<span class="bonus-badge" id="bonusBadgeFaustine"></span></div>
+        <div class="cantine-row" id="cantineFaustine"></div>
+        <div class="tasks" id="tasksFaustine"></div>
       </div>
-    </div>
 
-    <div class="child-section faustine">
-      <div class="child-title faustine">👧 Faustine<span class="bonus-badge" id="bonusBadgeFaustine"></span></div>
-      <div class="cantine-row" id="cantineFaustine"></div>
-      <div class="tasks" id="tasksFaustine"></div>
-    </div>
+      <div class="child-section victoria">
+        <div class="child-title victoria">👧 Victoria ✨<span class="bonus-badge" id="bonusBadgeVictoria"></span></div>
+        <div class="cantine-row" id="cantineVictoria"></div>
+        <div class="tasks" id="tasksVictoria"></div>
+      </div>
 
-    <div class="child-section victoria">
-      <div class="child-title victoria">👧 Victoria ✨<span class="bonus-badge" id="bonusBadgeVictoria"></span></div>
-      <div class="cantine-row" id="cantineVictoria"></div>
-      <div class="tasks" id="tasksVictoria"></div>
-    </div>
+      <div class="celebration" id="celebration">🎉 Bravo les filles, toutes les tâches de la journée sont faites ! 🌟</div>
 
-    <div class="celebration" id="celebration">🎉 Bravo les filles, toutes les tâches de la journée sont faites ! 🌟</div>
+    </div>
 
   </div>
 
@@ -1040,7 +1057,7 @@
       renderRecap();
     } else {
       recapBtn.classList.remove('active'); todayBtn.classList.add('active');
-      viewRecap.style.display = 'none'; viewToday.style.display = 'block';
+      viewRecap.style.display = 'none'; viewToday.style.display = 'flex';
     }
   }
 
