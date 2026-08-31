@@ -65,47 +65,68 @@
     margin-top: 2px;
   }
 
-  #viewToday {
+  .app-body {
     display: flex;
     gap: 14px;
     align-items: flex-start;
   }
-  .today-main {
+  .content-col {
     flex: 1;
     min-width: 0;
+  }
+  .days-col {
+    flex: 0 0 138px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
   }
   .days-nav {
     display: flex;
     flex-direction: column;
     gap: 7px;
-    flex: 0 0 138px;
   }
   .day-btn {
     background: var(--surface);
     border: 2.5px solid var(--border);
     border-radius: 14px;
-    padding: 9px 8px;
-    text-align: center;
+    padding: 9px 10px;
+    text-align: left;
     cursor: pointer;
     font-size: 13.5px;
     font-weight: 600;
     display: flex;
-    align-items: center;
+    align-items: baseline;
     justify-content: space-between;
     gap: 6px;
   }
-  .day-btn .dnum { display:inline-block; font-size: 14px; font-weight: 700; margin-top: 0; }
+  .day-btn .day-label { display: inline-flex; align-items: baseline; gap: 4px; }
+  .day-btn .dnum { display:inline-block; font-size: 14px; font-weight: 700; }
   .day-btn .dot {
     display: inline-block;
     width: 8px; height: 8px;
     border-radius: 50%;
     background: #6b6f76;
-    margin-top: 0;
+    flex: 0 0 auto;
   }
   .day-btn.today { border-color: #ffa94d; }
   .day-btn.selected { background: rgba(247,103,7,0.18); border-color: #f76707; }
   .day-btn .dot.partial { background: #ffc078; }
   .day-btn .dot.full { background: #40c057; }
+
+  .recap-nav-btn {
+    margin-top: 10px;
+    background: var(--surface);
+    border: 2.5px solid var(--border);
+    border-radius: 14px;
+    padding: 11px 8px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    color: var(--ink);
+  }
+  .recap-nav-btn.active { border-color: #f76707; color: var(--ink); background: rgba(247,103,7,0.12); }
 
   .progress-wrap {
     background: var(--surface);
@@ -184,21 +205,6 @@
   .cantine-toggle.on { border-color: #40c057; }
   .cantine-toggle.off { border-color: #f76707; background: rgba(247,103,7,0.12); }
   .cantine-hint { display: block; font-weight: 400; color: var(--muted); font-size: 11px; margin-top: 2px; }
-
-  .tabs-row { display: flex; gap: 8px; margin-bottom: 16px; }
-  .tab-btn {
-    flex: 1;
-    background: var(--surface);
-    border: 2px solid var(--border);
-    color: var(--muted);
-    border-radius: 14px;
-    padding: 10px;
-    font-size: 13px;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-  }
-  .tab-btn.active { border-color: #f76707; color: var(--ink); background: rgba(247,103,7,0.12); }
 
   .recap-panel {
     background: var(--surface);
@@ -538,83 +544,85 @@
     <div class="today-banner" id="todayBanner"></div>
   </div>
 
-  <div class="tabs-row">
-    <button type="button" class="tab-btn active" id="tabToday">📋 Routine du jour</button>
-    <button type="button" class="tab-btn" id="tabRecap">📊 Récap semaine</button>
-  </div>
+  <div class="app-body">
 
-  <div id="viewToday">
+    <div class="days-col">
+      <div class="days-nav" id="daysNav"></div>
+      <button type="button" class="recap-nav-btn" id="tabRecap">📊 Récap semaine</button>
+    </div>
 
-    <div class="days-nav" id="daysNav"></div>
+    <div class="content-col">
 
-    <div class="today-main">
+      <div id="viewToday">
 
-      <div class="progress-wrap">
-        <div class="progress-title" id="progressDayLabel">Tâches faites</div>
-        <div class="progress-row">
-          <div class="progress-name faustine">Faustine</div>
-          <div class="progress-bar"><div class="progress-fill faustine" id="progressFillFaustine"></div></div>
-          <div class="progress-count" id="progressTextFaustine">0 / 0</div>
+        <div class="progress-wrap">
+          <div class="progress-title" id="progressDayLabel">Tâches faites</div>
+          <div class="progress-row">
+            <div class="progress-name faustine">Faustine</div>
+            <div class="progress-bar"><div class="progress-fill faustine" id="progressFillFaustine"></div></div>
+            <div class="progress-count" id="progressTextFaustine">0 / 0</div>
+          </div>
+          <div class="progress-row">
+            <div class="progress-name victoria">Victoria</div>
+            <div class="progress-bar"><div class="progress-fill victoria" id="progressFillVictoria"></div></div>
+            <div class="progress-count" id="progressTextVictoria">0 / 0</div>
+          </div>
         </div>
-        <div class="progress-row">
-          <div class="progress-name victoria">Victoria</div>
-          <div class="progress-bar"><div class="progress-fill victoria" id="progressFillVictoria"></div></div>
-          <div class="progress-count" id="progressTextVictoria">0 / 0</div>
+
+        <div class="select-toggle-row">
+          <button type="button" id="selectToggleBtn">☑️ Sélection multiple (Faustine + Victoria)</button>
+          <div class="select-bar" id="selectBar">
+            <span id="selectCount">0 sélectionnée</span>
+            <button type="button" id="selectConfirmBtn">🔒 Annuler / Désactiver</button>
+          </div>
+        </div>
+
+        <div class="child-section faustine">
+          <div class="child-title faustine">👧 Faustine<span class="bonus-badge" id="bonusBadgeFaustine"></span></div>
+          <div class="cantine-row" id="cantineFaustine"></div>
+          <div class="tasks" id="tasksFaustine"></div>
+        </div>
+
+        <div class="child-section victoria">
+          <div class="child-title victoria">👧 Victoria ✨<span class="bonus-badge" id="bonusBadgeVictoria"></span></div>
+          <div class="cantine-row" id="cantineVictoria"></div>
+          <div class="tasks" id="tasksVictoria"></div>
+        </div>
+
+        <div class="celebration" id="celebration">🎉 Bravo les filles, toutes les tâches de la journée sont faites ! 🌟</div>
+
+      </div>
+
+      <div class="recap-panel" id="viewRecap" style="display:none;">
+        <div class="recap-table">
+          <div class="recap-row recap-head">
+            <div class="recap-day"></div>
+            <div class="recap-pct faustine-head">Faustine</div>
+            <div class="recap-pct victoria-head">Victoria</div>
+          </div>
+          <div id="recapBody"></div>
+        </div>
+
+        <div class="recap-details">
+          <div class="recap-col">
+            <div class="recap-col-title faustine">👧 Faustine</div>
+            <div id="recapPerfectFaustine"></div>
+            <div class="recap-miss-list" id="recapMissesFaustine"></div>
+            <div class="recap-bonus" id="recapBonusFaustine"></div>
+            <div class="streak-box" id="streakFaustine"></div>
+          </div>
+          <div class="recap-col">
+            <div class="recap-col-title victoria">👧 Victoria</div>
+            <div id="recapPerfectVictoria"></div>
+            <div class="recap-miss-list" id="recapMissesVictoria"></div>
+            <div class="recap-bonus" id="recapBonusVictoria"></div>
+            <div class="streak-box" id="streakVictoria"></div>
+          </div>
         </div>
       </div>
-
-      <div class="select-toggle-row">
-        <button type="button" id="selectToggleBtn">☑️ Sélection multiple (Faustine + Victoria)</button>
-        <div class="select-bar" id="selectBar">
-          <span id="selectCount">0 sélectionnée</span>
-          <button type="button" id="selectConfirmBtn">🔒 Annuler / Désactiver</button>
-        </div>
-      </div>
-
-      <div class="child-section faustine">
-        <div class="child-title faustine">👧 Faustine<span class="bonus-badge" id="bonusBadgeFaustine"></span></div>
-        <div class="cantine-row" id="cantineFaustine"></div>
-        <div class="tasks" id="tasksFaustine"></div>
-      </div>
-
-      <div class="child-section victoria">
-        <div class="child-title victoria">👧 Victoria ✨<span class="bonus-badge" id="bonusBadgeVictoria"></span></div>
-        <div class="cantine-row" id="cantineVictoria"></div>
-        <div class="tasks" id="tasksVictoria"></div>
-      </div>
-
-      <div class="celebration" id="celebration">🎉 Bravo les filles, toutes les tâches de la journée sont faites ! 🌟</div>
 
     </div>
 
-  </div>
-
-  <div class="recap-panel" id="viewRecap" style="display:none;">
-    <div class="recap-table">
-      <div class="recap-row recap-head">
-        <div class="recap-day"></div>
-        <div class="recap-pct faustine-head">Faustine</div>
-        <div class="recap-pct victoria-head">Victoria</div>
-      </div>
-      <div id="recapBody"></div>
-    </div>
-
-    <div class="recap-details">
-      <div class="recap-col">
-        <div class="recap-col-title faustine">👧 Faustine</div>
-        <div id="recapPerfectFaustine"></div>
-        <div class="recap-miss-list" id="recapMissesFaustine"></div>
-        <div class="recap-bonus" id="recapBonusFaustine"></div>
-        <div class="streak-box" id="streakFaustine"></div>
-      </div>
-      <div class="recap-col">
-        <div class="recap-col-title victoria">👧 Victoria</div>
-        <div id="recapPerfectVictoria"></div>
-        <div class="recap-miss-list" id="recapMissesVictoria"></div>
-        <div class="recap-bonus" id="recapBonusVictoria"></div>
-        <div class="streak-box" id="streakVictoria"></div>
-      </div>
-    </div>
   </div>
 
   <div class="note">Les coches sont enregistrées sur cette tablette pour toute la semaine (Lun → Dim). Une nouvelle semaine démarre automatiquement le lundi. Sur les jours d'école, la tâche "Déjeuner" n'apparaît que si la cantine est désactivée pour l'enfant ce jour-là (bouton en haut de sa liste). "Ranger sa chambre" n'apparaît que le mercredi et le dimanche. Toucher une tâche déjà cochée (ou déjà marquée "non applicable") demande le code parent, avec le choix d'annuler ou de la marquer "non à faire ce jour" (ex : absente ce jour-là) — elle est alors retirée du calcul du pourcentage. Le bouton "Sélection multiple" permet de choisir plusieurs tâches déjà cochées (ou non applicables), chez Faustine et/ou Victoria en même temps, pour les annuler ou les désactiver toutes en une seule fois, avec un seul code parent. Les corvées bonus (lave-vaisselle, aspirateur, contour doré) ne peuvent être cochées "faites" que par un adulte (code requis) : chaque jour où l'une des deux est faite, ça génère un bonus qui peut compenser un raté sur l'autre cette même semaine (les bonus ne se reportent pas à la semaine suivante) — le détail est dans l'onglet "Récap semaine".</div>
@@ -1048,17 +1056,16 @@
   }
 
   function switchTab(tab) {
-    const todayBtn = document.getElementById('tabToday');
     const recapBtn = document.getElementById('tabRecap');
     const viewToday = document.getElementById('viewToday');
     const viewRecap = document.getElementById('viewRecap');
     if (tab === 'recap') {
-      todayBtn.classList.remove('active'); recapBtn.classList.add('active');
+      recapBtn.classList.add('active');
       viewToday.style.display = 'none'; viewRecap.style.display = 'block';
       renderRecap();
     } else {
-      recapBtn.classList.remove('active'); todayBtn.classList.add('active');
-      viewRecap.style.display = 'none'; viewToday.style.display = 'flex';
+      recapBtn.classList.remove('active');
+      viewRecap.style.display = 'none'; viewToday.style.display = 'block';
     }
   }
 
@@ -1320,12 +1327,15 @@
       let dotClass = 'dot';
       if (total > 0 && done === total) dotClass += ' full';
       else if (done > 0) dotClass += ' partial';
-      btn.innerHTML = `${DAY_LABELS_FULL[i]}<span class="dnum">${d.getDate()}</span><span class="${dotClass}"></span>`;
+      btn.innerHTML = `<span class="day-label">${DAY_LABELS_FULL[i]} <span class="dnum">${d.getDate()}</span></span><span class="${dotClass}"></span>`;
       btn.addEventListener('click', () => {
         selectedDateStr = dateStr; selectedDayIdx = i;
         // Switching day: drop any in-progress multi-selection so it can't be
         // applied against the wrong day.
         selectMode = false; selectedTasks.clear();
+        // A day button always means "show me that day's routine" — even if
+        // we were sitting on the recap tab.
+        switchTab('today');
         renderAll();
       });
       nav.appendChild(btn);
@@ -1707,7 +1717,6 @@
   document.getElementById('resetConfirmCancel').addEventListener('click', closeResetConfirm);
   document.getElementById('resetConfirmConfirm').addEventListener('click', confirmReset);
 
-  document.getElementById('tabToday').addEventListener('click', () => switchTab('today'));
   document.getElementById('tabRecap').addEventListener('click', () => switchTab('recap'));
 
   function init() {
