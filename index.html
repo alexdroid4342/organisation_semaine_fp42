@@ -467,9 +467,40 @@
     font-family: inherit; cursor: pointer; background: #40c057; color: white;
   }
   .select-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Landscape-only: hidden by default, shown over everything while the
+     device is held in portrait (see the media query below). */
+  .rotate-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 3000;
+    background: linear-gradient(160deg, #5f6368, #34373c 60%);
+    color: var(--ink);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px;
+  }
+  .rotate-icon { font-size: 64px; margin-bottom: 18px; display: inline-block; animation: rotateHint 1.6s ease-in-out infinite; }
+  .rotate-text { font-size: 16px; font-weight: 600; max-width: 320px; line-height: 1.5; }
+  @keyframes rotateHint { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } }
+  @media (orientation: portrait) {
+    .rotate-overlay { display: flex; }
+  }
 </style>
 </head>
 <body>
+
+<!-- Shown only while the device is held in portrait — the app is designed
+     for landscape use on a tablet (also locked via manifest.json when
+     installed as an app). Pure CSS, so it works whether opened as an
+     installed PWA or in a plain browser tab, on any device. -->
+<div class="rotate-overlay">
+  <span class="rotate-icon">🔄</span>
+  <div class="rotate-text">Tourne la tablette pour utiliser l'appli en mode paysage</div>
+</div>
+
 <div class="wrap">
 
   <div class="banner" id="storageBanner">⚠️ Le stockage n'est pas disponible sur cet appareil/navigateur (mode privé ?). Les coches ne seront pas conservées après fermeture.</div>
