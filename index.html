@@ -493,9 +493,11 @@
 <body>
 
 <!-- Shown only while the device is held in portrait — the app is designed
-     for landscape use on a tablet (also locked via manifest.json when
-     installed as an app). Pure CSS, so it works whether opened as an
-     installed PWA or in a plain browser tab, on any device. -->
+     for landscape use on a tablet. Pure CSS, so it works whether opened as
+     an installed PWA or in a plain browser tab, on any device. (We
+     deliberately do NOT use the manifest.json orientation lock here: on
+     some Android browsers it forces a rotation that conflicts with this
+     media query and gets stuck showing the message even in landscape.) -->
 <div class="rotate-overlay">
   <span class="rotate-icon">🔄</span>
   <div class="rotate-text">Tourne la tablette pour utiliser l'appli en mode paysage</div>
