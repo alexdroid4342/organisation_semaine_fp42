@@ -506,6 +506,23 @@
   .rules-summary { font-size: 13px; line-height: 1.7; color: var(--ink); }
   .rules-summary b { color: #ffc078; }
 
+  .fix-zone {
+    margin-top: 18px;
+    padding: 14px;
+    border: 1.5px dashed #f76707;
+    border-radius: 14px;
+    background: rgba(247,103,7,0.08);
+  }
+  .fix-zone-title { font-weight: 700; color: #ffc078; margin-bottom: 6px; font-size: 13px; }
+  .fix-zone-text { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  .fix-zone-actions { display: flex; flex-direction: column; gap: 8px; }
+  .fix-btn {
+    background: rgba(247,103,7,0.16); border: 1.5px solid #f76707; color: #ffc078;
+    border-radius: 10px; padding: 9px 14px; font-size: 13px; font-weight: 700; cursor: pointer; width: 100%;
+    font-family: inherit;
+  }
+  .fix-btn:hover { background: rgba(247,103,7,0.26); }
+
   .danger-zone {
     margin-top: 18px;
     padding: 14px;
@@ -751,6 +768,14 @@
         <br><br>
         La proposition (prendre / reporter) se fait dans l'onglet "Semaine", dans la case "Fin de semaine" de chaque enfant.
       </div>
+      <div class="fix-zone">
+        <div class="fix-zone-title">🔄 Corriger une série de récompenses</div>
+        <div class="fix-zone-text">Remet la série "Fin de semaine" d'un enfant à zéro (repart à Semaine 1, palier 2€/1€) sans toucher à l'historique des tâches, aux récaps ni aux bonus. À utiliser si le palier proposé semble faux (ex : ça affiche "Semaine 2" alors que la récompense vient d'être prise).</div>
+        <div class="fix-zone-actions">
+          <button type="button" class="fix-btn" id="resetStreakFaustineBtn">🦄 Réinitialiser la série de Faustine</button>
+          <button type="button" class="fix-btn" id="resetStreakVictoriaBtn">🦋 Réinitialiser la série de Victoria</button>
+        </div>
+      </div>
       <div class="danger-zone">
         <div class="danger-zone-title">⚠️ Zone sensible</div>
         <div class="danger-zone-text">Supprime définitivement tout l'historique des tâches, les récaps et les séries de récompenses de Faustine et Victoria. Aucune sauvegarde n'est gardée.</div>
@@ -759,7 +784,7 @@
     </div>
     <div id="settingsPaneAide" style="display:none;">
       <div class="modal-title">ℹ️ Comment ça marche</div>
-      <div class="rules-summary">Les coches sont enregistrées sur cette tablette pour toute la semaine (Lun → Dim). Une nouvelle semaine démarre automatiquement le lundi. Sur les jours d'école, la tâche "Déjeuner" n'apparaît que si la cantine est désactivée pour l'enfant ce jour-là (bouton en haut de sa liste). "Ranger sa chambre" n'apparaît que le mercredi et le dimanche. Toucher une tâche déjà cochée (ou déjà marquée "non applicable") demande le code parent, avec le choix d'annuler ou de la marquer "non à faire ce jour" (ex : absente ce jour-là) — elle est alors retirée du calcul du pourcentage. Le bouton "Sélection multiple" permet de choisir plusieurs tâches déjà cochées (ou non applicables), chez Faustine et/ou Victoria en même temps, pour les annuler ou les désactiver toutes en une seule fois, avec un seul code parent. Le bouton "🎁 Bonus" (code requis) permet à un adulte d'ajouter un bonus libre à un enfant, pour n'importe quelle bonne action, avec un motif écrit à la main : ça compense une tâche ratée ce même jour, ou s'ajoute simplement en réserve sinon (les bonus ne se reportent pas à la semaine suivante) — le détail est dans l'onglet "Semaine".</div>
+      <div class="rules-summary">Les coches sont enregistrées sur cette tablette pour toute la semaine (Lun → Dim). Une nouvelle semaine démarre automatiquement le lundi. Sur les jours d'école, la tâche "Déjeuner" n'apparaît que si la cantine est désactivée pour l'enfant ce jour-là (bouton en haut de sa liste). "Ranger sa chambre" n'apparaît que le mercredi et le dimanche. Toucher une tâche déjà cochée (ou déjà marquée "non applicable") demande le code parent, avec le choix d'annuler ou de la marquer "non à faire ce jour" (ex : absente ce jour-là) — elle est alors retirée du calcul du pourcentage. Le bouton "Sélection multiple" permet de choisir plusieurs tâches déjà cochées (ou non applicables), chez Faustine et/ou Victoria en même temps, pour les annuler ou les désactiver toutes en une seule fois, avec un seul code parent. Le bouton "🎁 Bonus" (code requis) permet à un adulte d'ajouter un bonus libre à un enfant, pour n'importe quelle bonne action, avec un motif écrit à la main : c'est toujours en plus, ça ne compense jamais une tâche ratée (les bonus ne se reportent pas à la semaine suivante) — le détail est dans l'onglet "Semaine".</div>
     </div>
     <div class="modal-actions">
       <button class="modal-btn cancel" id="settingsCancel">Fermer</button>
@@ -998,18 +1023,12 @@
     });
   }
 
-  // Tally one day for one child, applying the free-form bonus rule (bonuses
-  // are added via the "🎁 Bonus" button — see addBonus() — and stored as
-  // rec.bonuses, an array of {id, motif, at}):
-  //  - CASE 1: once every task for the day is done, any bonus added that
-  //    same day no longer inflates the fraction — it's reported instead as
-  //    "bonusCount" (shown as a "⭐ N bonus ⭐" badge), and done/total stay
-  //    capped at the base ceiling.
-  //  - CASE 2: while the day's tasks aren't all done yet, each bonus nudges
-  //    "done" up by one (never past the total) without ever touching the
-  //    total itself. If that push happens to complete the total, it still
-  //    doesn't count as "case 1" — only completing the tasks themselves
-  //    switches into case 1.
+  // Tally one day for one child. Bonuses (added via the "🎁 Bonus" button —
+  // see addBonus() — and stored as rec.bonuses, an array of {id, motif, at})
+  // are purely additive now: they never compensate a missed task, so
+  // done/total always reflect the regular tasks only, and bonusCount is
+  // simply how many bonuses were added that day (shown as a "⭐ N bonus ⭐"
+  // badge regardless of whether the day's tasks are finished).
   function tallyDayForChild(rec, applicable) {
     let regDone = 0, regTotal = 0;
     applicable.forEach(t => {
@@ -1018,12 +1037,7 @@
       if (rec[t.id] === true) regDone += 1;
     });
     const bonusDoneCount = Array.isArray(rec.bonuses) ? rec.bonuses.length : 0;
-    const allRegularDone = regTotal > 0 && regDone === regTotal;
-    if (allRegularDone && bonusDoneCount > 0) {
-      return { done: regDone, total: regTotal, bonusCount: bonusDoneCount };
-    }
-    const done = regTotal > 0 ? Math.min(regDone + bonusDoneCount, regTotal) : regDone;
-    return { done, total: regTotal, bonusCount: 0 };
+    return { done: regDone, total: regTotal, bonusCount: bonusDoneCount };
   }
 
   function dayCompletion(dateStr, dayIdx) {
@@ -1068,34 +1082,6 @@
       });
     });
     return misses;
-  }
-
-  // How many of this week's free-form bonuses were actually needed to
-  // offset a missed task that same day (see tallyDayForChild's CASE 2), vs.
-  // how many were "spare" (added on a day with nothing to compensate, or
-  // beyond what that day's misses needed). Only days up to today count — a
-  // day that hasn't happened yet can't have used or spared anything.
-  // Bonuses never roll over to another week (this always looks at the
-  // current week only).
-  function computeWeekBonusReserve(child) {
-    const today = toDateStr(new Date());
-    let unused = 0;
-    weekDates.forEach((d, i) => {
-      const dateStr = toDateStr(d);
-      if (dateStr > today) return; // not lived yet
-      const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
-      const applicable = tasksForDay(i, isCantineOff(rec));
-      let regTotal = 0, regDone = 0;
-      applicable.forEach(t => {
-        if (rec[t.id] === 'na') return;
-        regTotal += 1;
-        if (rec[t.id] === true) regDone += 1;
-      });
-      const missed = Math.max(regTotal - regDone, 0);
-      const bonusCount = Array.isArray(rec.bonuses) ? rec.bonuses.length : 0;
-      unused += bonusCount - Math.min(missed, bonusCount);
-    });
-    return unused;
   }
 
   // Simple total: how many bonuses were added this week for this child —
@@ -1146,19 +1132,14 @@
     ).join('');
   }
 
-  // Bonus tasks stay positive-only in the recap: no "raté" wording. Shows the
-  // total number of bonus chores done this week, plus the bonus reserve
-  // earned (nothing shown for the reserve part when there's none to report).
+  // Bonus tasks stay positive-only in the recap: no "raté" wording. Bonuses
+  // are purely additive (they never offset a missed task), so this is just
+  // a running total for the week — no "reserve" concept anymore.
   function renderRecapBonus(child) {
     const container = document.getElementById('recapBonus' + capitalize(child));
     if (!container) return;
     const totalBonus = countWeekBonusDone(child);
-    const unused = computeWeekBonusReserve(child);
-    let html = `<div class="recap-bonus-line total">⭐ Bonus cette semaine : <b>${totalBonus}</b></div>`;
-    if (unused > 0) {
-      html += `<div class="recap-bonus-line ok">${unused} bonus en réserve 🎁</div>`;
-    }
-    container.innerHTML = html;
+    container.innerHTML = `<div class="recap-bonus-line total">⭐ Bonus cette semaine : <b>${totalBonus}</b></div>`;
   }
 
   function renderRecap() {
@@ -1343,23 +1324,34 @@
     return { done: counters.done, total: counters.total, pct: counters.total ? (counters.done / counters.total * 100) : 0 };
   }
 
-  // Brings a child's streak up to date with the current `weekKey`: the
-  // current week is added to streakWeeks (if not already the last one
-  // tracked), and `decided` resets so a fresh proposal (using the updated,
-  // larger average) is offered for the new week. Nothing is ever force-reset
-  // or auto-cashed-out here — if a decision is skipped, the average simply
+  // Brings a child's streak up to date with the current `weekKey`: on a
+  // genuine new-week transition, the current week is added to streakWeeks
+  // and `decided` resets so a fresh proposal (using the updated, larger
+  // average) is offered for the new week. Nothing is ever force-reset or
+  // auto-cashed-out here — if a decision is skipped, the average simply
   // keeps accumulating until a parent explicitly acts ("on avisera, mais on
   // n'annule pas tout").
+  //
+  // IMPORTANT: this runs on every "Semaine" tab render (not just once a
+  // week), so the push must only happen inside the weekKey-changed branch.
+  // A previous version pushed weekKey unconditionally whenever streakWeeks
+  // was empty/stale, which re-added the CURRENT (already cashed-out) week
+  // right back in after "Prendre" reset streakWeeks to [] — since decided
+  // stayed true, the button correctly stayed hidden that same week, but the
+  // stale week was still sitting in streakWeeks. Next Monday, the new week
+  // got appended on top of it, so a fresh streak started at 2 weeks instead
+  // of 1 and jumped straight to the "Semaine 2" tier (5€) instead of
+  // "Semaine 1" (2€).
   function syncWeekStreak(child) {
     const streak = rewards.children[child].streak;
     if (streak.weekKey !== weekKey) {
       streak.weekKey = weekKey;
       streak.decided = false;
+      if (!streak.streakWeeks.length || streak.streakWeeks[streak.streakWeeks.length - 1] !== weekKey) {
+        streak.streakWeeks.push(weekKey);
+      }
+      saveRewards();
     }
-    if (!streak.streakWeeks.length || streak.streakWeeks[streak.streakWeeks.length - 1] !== weekKey) {
-      streak.streakWeeks.push(weekKey);
-    }
-    saveRewards();
   }
 
   // Parent-confirmed decision for the CURRENT checkpoint (evaluated on the
@@ -1557,9 +1549,9 @@
     container.appendChild(btn);
   }
 
-  // Shows "⭐ X bonus ⭐" in the child's name banner once her base tasks for
-  // the day are all done and at least one bonus chore is done too (case 1
-  // of tallyDayForChild) — hidden otherwise.
+  // Shows "⭐ X bonus ⭐" in the child's name banner whenever at least one
+  // bonus was added for the selected day — independent of whether her base
+  // tasks are finished, since bonuses no longer compensate missed tasks.
   function renderBonusBadge(child, rec, applicable) {
     const badge = document.getElementById('bonusBadge' + capitalize(child));
     if (!badge) return;
@@ -1931,6 +1923,24 @@
     if (e.key === 'Enter') document.getElementById('bonusConfirm').click();
   });
   document.getElementById('bonusBtn').addEventListener('click', () => askForCode(openBonusModal));
+
+  // --- Fix a single child's reward streak: resets rewards.children[child].streak
+  // back to a fresh default (Semaine 1), without touching task history, recap
+  // data, or bonuses. This is the manual remedy for the streak-recalculation bug
+  // fixed in syncWeekStreak() above — before the fix, a week that had just been
+  // cashed out via "Prendre" could get silently re-added to streakWeeks by a
+  // same-week re-render, so the NEXT week started already at 2 accumulated weeks
+  // (stage "Semaine 2", 5€ tier) instead of a fresh "Semaine 1" (2€ tier). Data
+  // saved before the fix keeps that stale extra week forever unless reset here.
+  // Already sits behind the code-gated Réglages modal, so no extra confirmation —
+  // unlike "Réinitialiser toutes les données", nothing else is touched or lost.
+  function resetChildStreak(child) {
+    rewards.children[child].streak = defaultChildStreak();
+    syncWeekStreak(child);
+    renderStreakBox(child);
+  }
+  document.getElementById('resetStreakFaustineBtn').addEventListener('click', () => resetChildStreak('faustine'));
+  document.getElementById('resetStreakVictoriaBtn').addEventListener('click', () => resetChildStreak('victoria'));
 
   // --- Reset all data: double-gated (code, then an explicit confirm modal)
   // since it's the one truly irreversible action in the app. ---
