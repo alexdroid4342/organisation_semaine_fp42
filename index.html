@@ -843,6 +843,10 @@
   // "dejeuner" is special-cased in tasksForDay() below instead of using `days`:
   // on school days it only applies if that child's canteen toggle is off.
   //
+  // onlyChild: optional, restricts the task to a single child (by id in
+  // CHILDREN) instead of showing for everyone — see tasksForDay(). Every
+  // task without it stays shared across all children, as before.
+  //
   // There used to be two fixed adultOnly "bonus chore" tasks here
   // (vaisselle, aspirateur). They're gone: bonuses are now free-form, added
   // by an adult through the "🎁 Bonus" button (pick the child, type any
@@ -850,6 +854,7 @@
   // the #bonusOverlay modal.
   const TASKS = [
     { id: "petitdej", emoji: "☕🥐", label: "Petit-déj (table)" },
+    { id: "toilette", emoji: "🧼🪥", label: "Toilette du matin", onlyChild: "faustine" },
     { id: "matin", emoji: "🦷☀️", label: "Dents — matin" },
     { id: "dejeuner", emoji: "🥩🍟", label: "Déjeuner (table)" },
     { id: "devoirs", emoji: "📚", label: "Devoirs" },
@@ -888,8 +893,11 @@
 
   // cantineOff: whether THIS child is explicitly not at the canteen this day
   // (irrelevant outside school days, where "dejeuner" always applies).
-  function tasksForDay(dayIdx, cantineOff) {
+  // child: needed to filter out tasks reserved to a different child via
+  // `onlyChild` (see TASKS above) — pass it whenever it's known.
+  function tasksForDay(dayIdx, cantineOff, child) {
     return TASKS.filter(t => {
+      if (t.onlyChild && t.onlyChild !== child) return false;
       if (t.id !== 'dejeuner') return !t.days || t.days.includes(dayIdx);
       if (!SCHOOL_DAYS.includes(dayIdx)) return true;
       return !!cantineOff;
@@ -1044,7 +1052,7 @@
     let done = 0, total = 0;
     CHILDREN.forEach(child => {
       const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
-      const applicable = tasksForDay(dayIdx, isCantineOff(rec));
+      const applicable = tasksForDay(dayIdx, isCantineOff(rec), child);
       const tally = tallyDayForChild(rec, applicable);
       done += tally.done;
       total += tally.total;
@@ -1054,7 +1062,7 @@
 
   function childDayCompletion(child, dateStr, dayIdx) {
     const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
-    const applicable = tasksForDay(dayIdx, isCantineOff(rec));
+    const applicable = tasksForDay(dayIdx, isCantineOff(rec), child);
     const tally = tallyDayForChild(rec, applicable);
     return { done: tally.done, total: tally.total, bonusCount: tally.bonusCount, pct: tally.total ? (tally.done / tally.total * 100) : 0 };
   }
@@ -1074,7 +1082,7 @@
       const dateStr = toDateStr(d);
       if (dateStr > today) return; // not lived yet — can't count as a miss
       const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
-      const applicable = tasksForDay(i, isCantineOff(rec));
+      const applicable = tasksForDay(i, isCantineOff(rec), child);
       applicable.forEach(t => {
         if (t.adultOnly) return;
         if (rec[t.id] === 'na') return;
@@ -1200,7 +1208,7 @@
       const dateStr = toDateStr(d);
       if (dateStr > today) continue;
       const rec = (db[wKey] && db[wKey][child] && db[wKey][child][dateStr]) || {};
-      const applicable = tasksForDay(i, isCantineOff(rec));
+      const applicable = tasksForDay(i, isCantineOff(rec), child);
       const tally = tallyDayForChild(rec, applicable);
       counters.done += tally.done;
       counters.total += tally.total;
@@ -1224,7 +1232,7 @@
       const d = new Date(monday); d.setDate(monday.getDate() + i);
       const dateStr = toDateStr(d);
       const rec = (db[wKey] && db[wKey][child] && db[wKey][child][dateStr]) || {};
-      const applicable = tasksForDay(i, isCantineOff(rec));
+      const applicable = tasksForDay(i, isCantineOff(rec), child);
       const tally = tallyDayForChild(rec, applicable);
       counters.done += tally.done;
       counters.total += tally.total;
@@ -1471,7 +1479,7 @@
     ensureDay(selectedDateStr);
     CHILDREN.forEach(child => {
       const rec = db[weekKey][child][selectedDateStr];
-      const applicable = tasksForDay(selectedDayIdx, isCantineOff(rec));
+      const applicable = tasksForDay(selectedDayIdx, isCantineOff(rec), child);
       renderCantineToggle(child, rec);
       renderBonusBadge(child, rec, applicable);
       const container = document.getElementById(child === 'faustine' ? 'tasksFaustine' : 'tasksVictoria');
