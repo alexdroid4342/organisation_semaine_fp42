@@ -752,25 +752,19 @@
     <div id="settingsPaneReglages">
       <div class="modal-title">⚙️ Réglages parent — récompenses</div>
       <div class="rules-summary">
-        Chaque semaine peut proposer une récompense selon la <b>moyenne de réussite depuis le début de la série en cours</b> (tâches bonus non comprises) — pas juste la semaine en cours :
+        Chaque fin de semaine, on peut <b>prendre</b> la récompense ou la <b>reporter</b> à la semaine suivante — sans limite de semaines.
         <br><br>
-        <b>Semaine 1</b> : 2€ à 80%, 1€ à 60%, rien en dessous.
-        <br>
-        Si la récompense est <b>reportée</b> → <b>semaine 2</b> : moyenne des 2 semaines, 5€ à 80%, 3€ à 60%.
-        <br>
-        Si on reporte encore, la <b>semaine 3</b> passe automatiquement, sans décision (elle compte quand même dans la moyenne).
-        <br>
-        Report maximum : <b>semaine 4 (le mois)</b> : moyenne des 4 semaines, 10€ à 80%, 7€ à 60% — dernière étape, plus de report possible ensuite.
+        La case "Fin de semaine" affiche le <b>nombre de semaines cumulées</b> depuis la dernière récompense prise, et la <b>moyenne de réussite</b> sur toutes ces semaines (tâches bonus non comprises).
         <br><br>
-        On ne peut donc reporter que jusqu'à la semaine 2 ou jusqu'à la semaine 4 (3 semaines de report maximum).
+        Le montant n'est pas calculé par l'appli : c'est à vous de le fixer au moment de la prendre.
         <br>
-        Si la moyenne passe sous 60% à une étape, rien n'est perdu ni remis à zéro : on avise au cas par cas, et la moyenne continue de se construire la semaine suivante.
+        "Prendre" remet le compteur à zéro : la semaine suivante repart à 1 semaine cumulée. "Reporter" ajoute simplement la semaine suivante au cumul.
         <br><br>
         La proposition (prendre / reporter) se fait dans l'onglet "Semaine", dans la case "Fin de semaine" de chaque enfant.
       </div>
       <div class="fix-zone">
         <div class="fix-zone-title">🔄 Corriger une série de récompenses</div>
-        <div class="fix-zone-text">Remet la série "Fin de semaine" d'un enfant à zéro (repart à Semaine 1, palier 2€/1€) sans toucher à l'historique des tâches, aux récaps ni aux bonus. À utiliser si le palier proposé semble faux (ex : ça affiche "Semaine 2" alors que la récompense vient d'être prise).</div>
+        <div class="fix-zone-text">Remet le cumul "Fin de semaine" d'un enfant à zéro (repart à 1 semaine cumulée) sans toucher à l'historique des tâches, aux récaps ni aux bonus. À utiliser si le nombre de semaines cumulées semble faux (ex : ça affiche 2 semaines alors que la récompense vient d'être prise).</div>
         <div class="fix-zone-actions">
           <button type="button" class="fix-btn" id="resetStreakFaustineBtn">🦄 Réinitialiser la série de Faustine</button>
           <button type="button" class="fix-btn" id="resetStreakVictoriaBtn">🦋 Réinitialiser la série de Victoria</button>
@@ -926,24 +920,25 @@
     try {
       // Keep enough weeks around to compute month-based reward tiers (a month
       // is ~4-5 ISO weeks; 20 weeks gives a few months of safety margin).
+      // Weeks still part of a child's running cumul are never pruned, since
+      // reporting is now unlimited and the average needs every one of them.
       const keys = Object.keys(db).sort();
       if (keys.length > 20) {
-        keys.slice(0, keys.length - 20).forEach(k => delete db[k]);
+        const keep = new Set();
+        if (typeof rewards === 'object' && rewards && rewards.children) {
+          Object.values(rewards.children).forEach(c => (c.streak && c.streak.streakWeeks || []).forEach(w => keep.add(w)));
+        }
+        keys.slice(0, keys.length - 20).forEach(k => { if (!keep.has(k)) delete db[k]; });
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
     } catch (e) { /* ignore */ }
   }
 
-  // Take-or-report weekly streak. Each child has one `streak`:
-  //  - streakWeeks: ordered weekKeys accumulated since the streak's last
-  //    "prendre" (or since the very start). The reward at each checkpoint is
-  //    evaluated on the AVERAGE over all of these weeks pooled together —
-  //    not just the latest week's own %. Its length also drives the stage:
-  //    1 week = 'A' (semaine 1), 2 = 'B' (semaine 2), 3 = 'C' (semaine 3,
-  //    silent pass-through, no decision offered), 4+ = 'D' (semaine 4 / "le
-  //    mois", the final checkpoint — no further reporting past it; if
-  //    nothing is decided there, extra weeks just keep accumulating into the
-  //    average rather than anything being lost or force-reset).
+  // Take-or-report weekly cumul. Each child has one `streak`:
+  //  - streakWeeks: ordered weekKeys accumulated since the last "prendre"
+  //    (or since the very start). Its length is the number of weeks shown
+  //    as "semaines cumulées", and the displayed average pools all of them.
+  //    Reporting is unlimited: the list just keeps growing.
   //  - weekKey: the weekKey this streak was last synced against (detects a
   //    new week starting so `decided` can reset for a fresh proposal).
   //  - decided: whether prendre/reporter has already been chosen this week.
@@ -1290,33 +1285,12 @@
     }
   }
 
-  // --- Rewards: take-or-report weekly streak ---
-  // Fixed formula, not user-editable (the rule is spelled out as plain text
-  // in "Réglages parent"). Stage 'C' (semaine 3) has no tier: it's a silent
-  // pass-through week — no decision is ever offered there, but it still
-  // counts into the average for the next checkpoint.
-  function weeklyStreakTier(stage, pct) {
-    const tiers = {
-      A: [{ min: 80, amount: 2 }, { min: 60, amount: 1 }],
-      B: [{ min: 80, amount: 5 }, { min: 60, amount: 3 }],
-      D: [{ min: 80, amount: 10 }, { min: 60, amount: 7 }]
-    };
-    const list = tiers[stage] || [];
-    for (const t of list) if (pct >= t.min) return t;
-    return null;
-  }
-
-  const STAGE_LABELS = { A: 'Semaine 1', B: 'Semaine 2', C: 'Semaine 3', D: 'Semaine 4 (le mois)' };
-
-  // The stage is simply derived from how many weeks have accumulated in the
-  // current streak — 1 => A, 2 => B, 3 => C, 4 or more => D (D is the final
-  // checkpoint: if nothing is decided there, extra weeks just keep piling
-  // into the average rather than being capped or reset).
-  function stageForWeekCount(n) {
-    if (n <= 1) return 'A';
-    if (n === 2) return 'B';
-    if (n === 3) return 'C';
-    return 'D';
+  // --- Rewards: take-or-report weekly cumul ---
+  // No amounts and no stages anymore: every week a parent can "prendre"
+  // (cash out, the amount is decided outside the app, cumul restarts) or
+  // "reporter" (the next week is added to the cumul), with no limit.
+  function weeksLabel(n) {
+    return `${n} semaine${n > 1 ? 's' : ''} cumulée${n > 1 ? 's' : ''}`;
   }
 
   // Pooled done/total across every week in the streak — the checkpoint
@@ -1370,17 +1344,13 @@
   function decideStreak(child, action) {
     const streak = rewards.children[child].streak;
     if (streak.decided) return;
-    const stage = stageForWeekCount(streak.streakWeeks.length);
-    if (stage === 'C') return; // no decision possible at the silent pass-through week
+    const n = streak.streakWeeks.length;
     const stats = computeStreakAverageStats(child, streak.streakWeeks);
-    const tier = weeklyStreakTier(stage, stats.pct);
-    if (!tier) return; // nothing earned yet at this checkpoint — nothing to decide
     if (action === 'prendre') {
-      streak.lastDecision = { stage, pct: Math.round(stats.pct), weeks: streak.streakWeeks.length, amount: tier.amount, action: 'pris' };
+      streak.lastDecision = { pct: Math.round(stats.pct), weeks: n, action: 'pris' };
       streak.streakWeeks = [];
     } else if (action === 'reporter') {
-      if (stage === 'D') return; // no reporting past the final checkpoint
-      streak.lastDecision = { stage, pct: Math.round(stats.pct), weeks: streak.streakWeeks.length, amount: tier.amount, action: 'reporté' };
+      streak.lastDecision = { pct: Math.round(stats.pct), weeks: n, action: 'reporté' };
       // streakWeeks stays as-is — it keeps growing as new weeks are synced.
     } else {
       return;
@@ -1394,39 +1364,26 @@
     const container = document.getElementById('streak' + capitalize(child));
     if (!container) return;
     const streak = rewards.children[child].streak;
-    const n = streak.streakWeeks.length;
-    const stage = stageForWeekCount(n);
+    const d = streak.lastDecision;
+    const justTaken = streak.decided && d && d.action === 'pris';
+    // Right after "Prendre", streakWeeks is empty: show what was just cashed out.
+    const n = justTaken ? d.weeks : streak.streakWeeks.length;
 
-    if (stage === 'C') {
-      container.innerHTML = `
-        <div class="streak-title">🎁 Fin de semaine — ${STAGE_LABELS.C}</div>
-        <div class="streak-msg locked">🔒 Pas de décision cette semaine — rendez-vous à la semaine 4 (le mois). Cette semaine compte quand même dans la moyenne.</div>
-      `;
-      return;
-    }
-
-    const stats = computeStreakAverageStats(child, streak.streakWeeks);
-    const pctRounded = Math.round(stats.pct);
-    const tier = weeklyStreakTier(stage, stats.pct);
-    const label = (stage === 'D' && n > 4) ? `Semaine 4+ (${n} semaines cumulées)` : STAGE_LABELS[stage];
-
-    let html = `<div class="streak-title">🎁 Fin de semaine — ${label}</div>`;
-    html += `<div class="streak-pct">Moyenne sur ${n} semaine${n > 1 ? 's' : ''} : <b>${stats.total ? pctRounded + '%' : '—'}</b></div>`;
-
-    if (streak.decided) {
-      const d = streak.lastDecision;
-      if (d && d.action === 'pris') {
-        html += `<div class="streak-decided pris">✅ Récompense prise : ${d.amount}€</div>`;
-      } else if (d && d.action === 'reporté') {
-        html += `<div class="streak-decided reporte">➡️ Reporté — on continue, la moyenne se poursuit la semaine prochaine.</div>`;
-      }
-    } else if (tier) {
-      html += `<div class="streak-actions">` +
-        `<button type="button" class="streak-btn take" data-child="${child}" data-action="prendre">Prendre ${tier.amount}€</button>` +
-        (stage !== 'D' ? `<button type="button" class="streak-btn report" data-child="${child}" data-action="reporter">Reporter</button>` : '') +
-        `</div>`;
+    let html = `<div class="streak-title">🎁 Fin de semaine — ${weeksLabel(n)}</div>`;
+    if (justTaken) {
+      html += `<div class="streak-pct">Moyenne sur ${n} semaine${n > 1 ? 's' : ''} : <b>${d.pct}%</b></div>`;
+      html += `<div class="streak-decided pris">✅ Récompense prise — le cumul repart à zéro la semaine prochaine.</div>`;
     } else {
-      html += `<div class="streak-msg">Pas de récompense à ce palier pour l'instant (moins de 60% de moyenne) — rien n'est perdu, on continue et on en reparle.</div>`;
+      const stats = computeStreakAverageStats(child, streak.streakWeeks);
+      html += `<div class="streak-pct">Moyenne sur ${n} semaine${n > 1 ? 's' : ''} : <b>${stats.total ? Math.round(stats.pct) + '%' : '—'}</b></div>`;
+      if (streak.decided) {
+        html += `<div class="streak-decided reporte">➡️ Reporté — la semaine prochaine s'ajoute au cumul (${weeksLabel(n + 1)}).</div>`;
+      } else {
+        html += `<div class="streak-actions">` +
+          `<button type="button" class="streak-btn take" data-child="${child}" data-action="prendre">Prendre</button>` +
+          `<button type="button" class="streak-btn report" data-child="${child}" data-action="reporter">Reporter</button>` +
+          `</div>`;
+      }
     }
 
     container.innerHTML = html;
@@ -1821,7 +1778,7 @@
   document.getElementById('codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitCode(); });
 
   // --- Settings modal: two tabs, "Réglages" (static rule summary — nothing
-  // to edit, the reward formula is fixed, see weeklyStreakTier — plus the
+  // to edit, no reward amount is computed, see renderStreakBox — plus the
   // danger zone) and "Aide" (the former standalone info modal, merged in
   // here so there's a single code-gated parent popup instead of two
   // sidebar buttons). ---
