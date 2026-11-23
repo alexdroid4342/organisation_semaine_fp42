@@ -837,6 +837,9 @@
   // "dejeuner" is special-cased in tasksForDay() below instead of using `days`:
   // on school days it only applies if that child's canteen toggle is off.
   //
+  // since: optional "YYYY-MM-DD" — the task only exists from that date on, so
+  // adding a task never turns earlier days into misses in the averages.
+  //
   // daysByChild: optional per-child override of `days` (same indices).
   // labelByChild / emojiByChild: optional per-child wording of the same task
   // (same id, so the history and the stats stay continuous) — always go
@@ -855,6 +858,7 @@
     { id: "petitdej", emoji: "☕🥐", label: "Petit-déj (table)" },
     { id: "toilette", emoji: "🧼🪥", label: "Toilette du matin", onlyChild: "faustine" },
     { id: "matin", emoji: "🦷☀️", label: "Dents — matin" },
+    { id: "volets", emoji: "🪟🌅", label: "Ouvrir ses volets", since: "2026-11-23" },
     { id: "dejeuner", emoji: "🥩🍟", label: "Déjeuner (table)" },
     // Pas de devoirs le vendredi (les deux), ni le mardi pour Faustine.
     { id: "devoirs", emoji: "📚", label: "Devoirs", days: [0, 1, 2, 3, 5, 6], daysByChild: { faustine: [0, 2, 3, 5, 6] } },
@@ -903,9 +907,10 @@
     return (t.emojiByChild && t.emojiByChild[child]) || t.emoji;
   }
 
-  function tasksForDay(dayIdx, cantineOff, child) {
+  function tasksForDay(dayIdx, cantineOff, child, dateStr) {
     return TASKS.filter(t => {
       if (t.onlyChild && t.onlyChild !== child) return false;
+      if (t.since && dateStr && dateStr < t.since) return false;
       if (t.id !== 'dejeuner') {
         const days = (t.daysByChild && t.daysByChild[child]) || t.days;
         return !days || days.includes(dayIdx);
@@ -1064,7 +1069,7 @@
     let done = 0, total = 0;
     CHILDREN.forEach(child => {
       const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
-      const applicable = tasksForDay(dayIdx, isCantineOff(rec), child);
+      const applicable = tasksForDay(dayIdx, isCantineOff(rec), child, dateStr);
       const tally = tallyDayForChild(rec, applicable);
       done += tally.done;
       total += tally.total;
@@ -1074,7 +1079,7 @@
 
   function childDayCompletion(child, dateStr, dayIdx) {
     const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
-    const applicable = tasksForDay(dayIdx, isCantineOff(rec), child);
+    const applicable = tasksForDay(dayIdx, isCantineOff(rec), child, dateStr);
     const tally = tallyDayForChild(rec, applicable);
     return { done: tally.done, total: tally.total, bonusCount: tally.bonusCount, pct: tally.total ? (tally.done / tally.total * 100) : 0 };
   }
@@ -1094,7 +1099,7 @@
       const dateStr = toDateStr(d);
       if (dateStr > today) return; // not lived yet — can't count as a miss
       const rec = (db[weekKey] && db[weekKey][child][dateStr]) || {};
-      const applicable = tasksForDay(i, isCantineOff(rec), child);
+      const applicable = tasksForDay(i, isCantineOff(rec), child, dateStr);
       applicable.forEach(t => {
         if (t.adultOnly) return;
         if (rec[t.id] === 'na') return;
@@ -1220,7 +1225,7 @@
       const dateStr = toDateStr(d);
       if (dateStr > today) continue;
       const rec = (db[wKey] && db[wKey][child] && db[wKey][child][dateStr]) || {};
-      const applicable = tasksForDay(i, isCantineOff(rec), child);
+      const applicable = tasksForDay(i, isCantineOff(rec), child, dateStr);
       const tally = tallyDayForChild(rec, applicable);
       counters.done += tally.done;
       counters.total += tally.total;
@@ -1244,7 +1249,7 @@
       const d = new Date(monday); d.setDate(monday.getDate() + i);
       const dateStr = toDateStr(d);
       const rec = (db[wKey] && db[wKey][child] && db[wKey][child][dateStr]) || {};
-      const applicable = tasksForDay(i, isCantineOff(rec), child);
+      const applicable = tasksForDay(i, isCantineOff(rec), child, dateStr);
       const tally = tallyDayForChild(rec, applicable);
       counters.done += tally.done;
       counters.total += tally.total;
@@ -1453,7 +1458,7 @@
     ensureDay(selectedDateStr);
     CHILDREN.forEach(child => {
       const rec = db[weekKey][child][selectedDateStr];
-      const applicable = tasksForDay(selectedDayIdx, isCantineOff(rec), child);
+      const applicable = tasksForDay(selectedDayIdx, isCantineOff(rec), child, selectedDateStr);
       renderCantineToggle(child, rec);
       renderBonusBadge(child, rec, applicable);
       const container = document.getElementById(child === 'faustine' ? 'tasksFaustine' : 'tasksVictoria');
